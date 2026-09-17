@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}KAVALI ERP — {{ 'Modifier' if client else 'Nouveau' }} Client{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="crumb">Tableau de bord</a>
+<span class="sep">/</span>
+<a href="{{ url_for('commercial.clients_list') }}" class="crumb">Clients</a>
+<span class="sep">/</span>
+<span class="current">{{ 'Modifier' if client else 'Nouveau' }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>{{ 'Modifier le client' if client else 'Nouveau client' }}</h1>
+        <p class="text-muted">{{ 'Mettre à jour les informations du client' if client else 'Ajouter un nouveau client' }}</p>
+    </div>
+</div>
+
+<div class="card" style="max-width:800px;">
+    <form method="POST" action="{{ url_for('commercial.client_update', id=client.id) if client else url_for('commercial.client_create') }}" class="form">
+        <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+            <div class="form-group">
+                <label class="form-label">Nom du client *</label>
+                <input type="text" name="name" class="form-input" required value="{{ client.name if client else '' }}" placeholder="Nom complet">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Contact</label>
+                <input type="text" name="contact" class="form-input" value="{{ client.contact if client else '' }}" placeholder="Personne de contact">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Téléphone</label>
+                <input type="text" name="phone" class="form-input" value="{{ client.phone if client else '' }}" placeholder="+225 00 00 00 00">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" name="email" class="form-input" value="{{ client.email if client else '' }}" placeholder="client@example.com">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Zone</label>
+                <input type="text" name="zone" class="form-input" value="{{ client.zone if client else '' }}" placeholder="Zone géographique">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Note</label>
+                <select name="note" class="form-input">
+                    <option value="A" {% if client and client.note == 'A' %}selected{% endif %}>A — Excellent</option>
+                    <option value="B" {% if client and client.note == 'B' or not client %}selected{% endif %}>B — Bon</option>
+                    <option value="C" {% if client and client.note == 'C' %}selected{% endif %}>C — Moyen</option>
+                    <option value="D" {% if client and client.note == 'D' %}selected{% endif %}>D — Risqué</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Adresse</label>
+            <textarea name="address" class="form-input" rows="3" placeholder="Adresse complète">{{ client.address if client else '' }}</textarea>
+        </div>
+        <div class="form-actions" style="display:flex;gap:1rem;margin-top:1.5rem;">
+            <button type="submit" class="btn btn-primary">{{ 'Mettre à jour' if client else 'Créer le client' }}</button>
+            <a href="{{ url_for('commercial.clients_list') }}" class="btn btn-ghost">Annuler</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

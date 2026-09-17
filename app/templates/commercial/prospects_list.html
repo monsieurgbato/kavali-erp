@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}KAVALI ERP — Prospects{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="crumb">Tableau de bord</a>
+<span class="sep">/</span>
+<span class="current">Prospects</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Prospects</h1>
+        <p class="text-muted">Gestion des prospects à convertir en clients</p>
+    </div>
+    <a href="{{ url_for('commercial.client_new') }}" class="btn btn-primary">+ Nouveau prospect</a>
+</div>
+
+<!-- Search -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <form method="GET" action="{{ url_for('commercial.prospects_list') }}" class="search-form">
+        <div class="form-row" style="display:flex;gap:1rem;align-items:end;">
+            <div class="form-group" style="flex:1;">
+                <input type="text" name="q" class="form-input" placeholder="Rechercher un prospect..." value="{{ q }}">
+            </div>
+            <button type="submit" class="btn btn-primary">Rechercher</button>
+            {% if q %}
+            <a href="{{ url_for('commercial.prospects_list') }}" class="btn btn-ghost">Effacer</a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Prospects Table -->
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Contact</th>
+                <th>Téléphone</th>
+                <th>Email</th>
+                <th>Date d'ajout</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in prospects.items %}
+            <tr>
+                <td>
+                    <a href="{{ url_for('commercial.client_detail', id=p.id) }}" class="cell-link" style="font-weight:600;">
+                        {{ p.name }}
+                    </a>
+                </td>
+                <td>{{ p.contact or '—' }}</td>
+                <td>{{ p.phone or '—' }}</td>
+                <td>{{ p.email or '—' }}</td>
+                <td>{{ p.created_at.strftime('%d/%m/%Y') if p.created_at else '—' }}</td>
+                <td>
+                    <div class="action-btns">
+                        <a href="{{ url_for('commercial.client_detail', id=p.id) }}" class="btn btn-sm btn-ghost">Voir</a>
+                        <form method="POST" action="{{ url_for('commercial.prospect_convert', id=p.id) }}" style="display:inline;">
+                            <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Convertir ce prospect en client ?')">Convertir</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" style="text-align:center;padding:2.5rem;color:var(--muted-foreground);">
+                    {% if q %}
+                    Aucun prospect trouvé pour "{{ q }}".
+                    {% else %}
+                    Aucun prospect enregistré.
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+{% if prospects.pages > 1 %}
+<div class="pagination" style="display:flex;justify-content:center;gap:0.5rem;margin-top:1.5rem;">
+    {% if prospects.has_prev %}
+    <a href="{{ url_for('commercial.prospects_list', page=prospects.prev_num, q=q) }}" class="btn btn-sm btn-ghost">&laquo; Précédent</a>
+    {% endif %}
+    {% for p in prospects.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+        {% if p %}
+        <a href="{{ url_for('commercial.prospects_list', page=p, q=q) }}" class="btn btn-sm {% if p == prospects.page %}btn-primary{% else %}btn-ghost{% endif %}">{{ p }}</a>
+        {% else %}
+        <span class="btn btn-sm btn-ghost disabled">...</span>
+        {% endif %}
+    {% endfor %}
+    {% if prospects.has_next %}
+    <a href="{{ url_for('commercial.prospects_list', page=prospects.next_num, q=q) }}" class="btn btn-sm btn-ghost">Suivant &raquo;</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

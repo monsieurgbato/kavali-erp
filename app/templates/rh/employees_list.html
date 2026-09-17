@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}KAVALI ERP — Employés{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="crumb">Tableau de bord</a>
+<span class="sep">/</span>
+<span class="current">Employés</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
+    <div>
+        <h1>Employés</h1>
+        <p class="text-muted">Gestion du personnel — {{ total_active }} actif(s)</p>
+    </div>
+    <a href="{{ url_for('rh.employee_new') }}" class="btn btn-primary">+ Nouvel employé</a>
+</div>
+
+<!-- Stats cards -->
+<div class="stats-grid" style="margin-bottom:1.5rem;">
+    <div class="stat-card">
+        <div class="stat-header">
+            <span class="stat-label">Actifs</span>
+        </div>
+        <div class="stat-value" style="color:var(--success);">{{ total_active }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-header">
+            <span class="stat-label">Suspendus</span>
+        </div>
+        <div class="stat-value" style="color:var(--warning);">{{ total_suspended }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-header">
+            <span class="stat-label">Archivés</span>
+        </div>
+        <div class="stat-value" style="color:var(--muted-foreground);">{{ total_archived }}</div>
+    </div>
+</div>
+
+<!-- Search + Filters -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <form method="GET" action="{{ url_for('rh.employees_list') }}" class="search-form">
+        <div style="display:flex;gap:1rem;align-items:end;flex-wrap:wrap;">
+            <div class="form-group" style="flex:2;min-width:200px;margin-bottom:0;">
+                <input type="text" name="q" class="form-input" placeholder="Rechercher un employé..." value="{{ q }}">
+            </div>
+            <div class="form-group" style="flex:1;min-width:140px;margin-bottom:0;">
+                <select name="service" class="form-select">
+                    <option value="">Tous services</option>
+                    {% for s in services %}
+                    <option value="{{ s }}" {% if service == s %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;">
+                <select name="status" class="form-select">
+                    <option value="">Tous statuts</option>
+                    <option value="active" {% if status == 'active' %}selected{% endif %}>Actif</option>
+                    <option value="suspended" {% if status == 'suspended' %}selected{% endif %}>Suspendu</option>
+                    <option value="archived" {% if status == 'archived' %}selected{% endif %}>Archivé</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-bottom:0;">Filtrer</button>
+            {% if q or service or status %}
+            <a href="{{ url_for('rh.employees_list') }}" class="btn btn-ghost" style="margin-bottom:0;">Effacer</a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Employees Table -->
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Matricule</th>
+                <th>Nom & Prénom</th>
+                <th>Poste</th>
+                <th>Service</th>
+                <th>Email</th>
+                <th>Téléphone</th>
+                <th>Type contrat</th>
+                <th>Statut</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for emp in employees.items %}
+            <tr>
+                <td><span class="badge badge-secondary">{{ emp.matricule }}</span></td>
+                <td>
+                    <a href="{{ url_for('rh.employee_detail', id=emp.id) }}" class="cell-link" style="font-weight:600;">
+                        {{ emp.last_name }} {{ emp.first_name }}
+                    </a>
+                </td>
+                <td>{{ emp.position or '—' }}</td>
+                <td>{{ emp.service or '—' }}</td>
+                <td>{{ emp.email or '—' }}</td>
+                <td>{{ emp.phone or '—' }}</td>
+                <td>
+                    {% if emp.contract_type == 'CDI' %}
+                    <span class="badge badge-primary">CDI</span>
+                    {% elif emp.contract_type == 'CDD' %}
+                    <span class="badge badge-warning">CDD</span>
+                    {% else %}
+                    <span class="badge badge-default">Prestation</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if emp.status == 'active' %}
+                    <span class="badge badge-success">Actif</span>
+                    {% elif emp.status == 'suspended' %}
+                    <span class="badge badge-warning">Suspendu</span>
+                    {% else %}
+                    <span class="badge badge-default">Archivé</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="action-btns" style="display:flex;gap:0.25rem;">
+                        <a href="{{ url_for('rh.employee_detail', id=emp.id) }}" class="btn btn-sm btn-ghost" title="Voir">👁️</a>
+                        <a href="{{ url_for('rh.employee_edit', id=emp.id) }}" class="btn btn-sm btn-ghost" title="Modifier">✏️</a>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="9" style="text-align:center;padding:2.5rem;color:var(--muted-foreground);">
+                    {% if q or service or status %}
+                    Aucun employé trouvé pour ces critères.
+                    {% else %}
+                    Aucun employé enregistré. <a href="{{ url_for('rh.employee_new') }}">Ajouter le premier employé</a>.
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+{% if employees.pages > 1 %}
+<div style="display:flex;justify-content:center;gap:0.5rem;margin-top:1.5rem;">
+    {% if employees.has_prev %}
+    <a href="{{ url_for('rh.employees_list', page=employees.prev_num, q=q, service=service, status=status) }}" class="btn btn-sm btn-ghost">&laquo; Précédent</a>
+    {% endif %}
+    {% for p in employees.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+        {% if p %}
+        <a href="{{ url_for('rh.employees_list', page=p, q=q, service=service, status=status) }}" class="btn btn-sm {% if p == employees.page %}btn-primary{% else %}btn-ghost{% endif %}">{{ p }}</a>
+        {% else %}
+        <span class="btn btn-sm btn-ghost disabled">...</span>
+        {% endif %}
+    {% endfor %}
+    {% if employees.has_next %}
+    <a href="{{ url_for('rh.employees_list', page=employees.next_num, q=q, service=service, status=status) }}" class="btn btn-sm btn-ghost">Suivant &raquo;</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

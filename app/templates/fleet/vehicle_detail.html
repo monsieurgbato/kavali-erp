@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}KAVALI ERP — {{ vehicle.immatriculation }}{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="crumb">Tableau de bord</a>
+<span class="sep">/</span>
+<a href="{{ url_for('fleet.vehicles_list') }}" class="crumb">Véhicules</a>
+<span class="sep">/</span>
+<span class="current">{{ vehicle.immatriculation }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>{{ vehicle.immatriculation }}</h1>
+        <p class="text-muted">{{ vehicle.brand }} {{ vehicle.model }} — {{ vehicle.year if vehicle.year > 0 else 'Année inconnue' }}</p>
+    </div>
+    <div style="display:flex;gap:0.5rem;">
+        <a href="{{ url_for('fleet.vehicle_edit', id=vehicle.id) }}" class="btn btn-primary">Modifier</a>
+        <form method="POST" action="{{ url_for('fleet.vehicle_delete', id=vehicle.id) }}" style="display:inline;">
+            <button type="submit" class="btn btn-danger" onclick="return confirm('Désactiver ce véhicule ?')">Désactiver</button>
+        </form>
+    </div>
+</div>
+
+<!-- Info Cards -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1rem;margin-bottom:1.5rem;">
+    <div class="card">
+        <div style="font-size:0.85rem;color:var(--muted-foreground);margin-bottom:0.5rem;">Statut</div>
+        <div style="font-size:1.25rem;">{{ badge(vehicle.status)|safe }}</div>
+    </div>
+    <div class="card">
+        <div style="font-size:0.85rem;color:var(--muted-foreground);margin-bottom:0.5rem;">Chauffeur assigné</div>
+        <div style="font-size:1.1rem;font-weight:600;">{{ vehicle.driver.full_name if vehicle.driver else '— Aucun —' }}</div>
+    </div>
+    <div class="card">
+        <div style="font-size:0.85rem;color:var(--muted-foreground);margin-bottom:0.5rem;">Type / Carburant</div>
+        <div style="font-size:1.1rem;">{{ vehicle.type or 'N/A' }} · {{ vehicle.fuel_type or 'N/A' }}</div>
+    </div>
+    <div class="card">
+        <div style="font-size:0.85rem;color:var(--muted-foreground);margin-bottom:0.5rem;">Assurance</div>
+        <div style="font-size:1.1rem;">
+            {% if vehicle.insurance_expiry %}
+            {{ vehicle.insurance_expiry.strftime('%d/%m/%Y') }}
+            {% else %}
+            <span class="text-muted">Non renseignée</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card">
+        <div style="font-size:0.85rem;color:var(--muted-foreground);margin-bottom:0.5rem;">Visite technique</div>
+        <div style="font-size:1.1rem;">
+            {% if vehicle.technical_visit %}
+            {{ vehicle.technical_visit.strftime('%d/%m/%Y') }}
+            {% else %}
+            <span class="text-muted">Non renseignée</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card">
+        <div style="font-size:0.85rem;color:var(--muted-foreground);margin-bottom:0.5rem;">Prix d'achat</div>
+        <div style="font-size:1.1rem;font-weight:600;color:var(--kavali-dore);">
+            {{ format_currency(vehicle.purchase_price) if vehicle.purchase_price else '—' }}
+        </div>
+    </div>
+</div>
+
+{% if vehicle.notes %}
+<div class="card" style="margin-bottom:1.5rem;">
+    <div style="font-size:0.85rem;color:var(--muted-foreground);margin-bottom:0.5rem;">Notes</div>
+    <div style="white-space:pre-wrap;">{{ vehicle.notes }}</div>
+</div>
+{% endif %}
+
+<!-- Fuel History -->
+<div class="page-header" style="margin-top:2rem;">
+    <h2>⛽ Relevés carburant</h2>
+    <a href="{{ url_for('fleet.fuel_new') }}" class="btn btn-sm btn-primary">+ Ajouter</a>
+</div>
+<div class="table-container" style="margin-bottom:1.5rem;">
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Litres</th>
+                <th>Prix unitaire</th>
+                <th>Total</th>
+                <th>Compteur</th>
+                <th>Station</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for f in fuel_records %}
+            <tr>
+                <td>{{ f.date.strftime('%d/%m/%Y') if f.date else '—' }}</td>
+                <td>{{ f.liters }}</td>
+                <td>{{ format_currency(f.unit_price) }}</td>
+                <td style="font-weight:600;">{{ format_currency(f.total_amount) }}</td>
+                <td>{{ f.odometer if f.odometer > 0 else '—' }} km</td>
+                <td>{{ f.station or '—' }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" style="text-align:center;padding:1.5rem;color:var(--muted-foreground);">
+                    Aucun relevé carburant. <a href="{{ url_for('fleet.fuel_new') }}">Ajouter</a>.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Maintenance History -->
+<div class="page-header" style="margin-top:1rem;">
+    <h2>🔧 Maintenance</h2>
+    <a href="{{ url_for('fleet.maintenance_new') }}" class="btn btn-sm btn-primary">+ Ajouter</a>
+</div>
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Description</th>
+                <th>Coût</th>
+                <th>Prestataire</th>
+                <th>Statut</th>
+                <th>Prochaine échéance</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in maintenance_records %}
+            <tr>
+                <td>{{ m.date.strftime('%d/%m/%Y') if m.date else '—' }}</td>
+                <td><span style="font-weight:600;">{{ m.type or '—' }}</span></td>
+                <td>{{ m.description|truncate(60) or '—' }}</td>
+                <td>{{ format_currency(m.cost) if m.cost else '—' }}</td>
+                <td>{{ m.provider or '—' }}</td>
+                <td>{{ maint_badge(m.status)|safe }}</td>
+                <td>
+                    {% if m.next_due_date %}
+                    {{ m.next_due_date.strftime('%d/%m/%Y') }}
+                    {% elif m.next_due_km > 0 %}
+                    {{ m.next_due_km }} km
+                    {% else %}
+                    —
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" style="text-align:center;padding:1.5rem;color:var(--muted-foreground);">
+                    Aucun enregistrement de maintenance. <a href="{{ url_for('fleet.maintenance_new') }}">Ajouter</a>.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

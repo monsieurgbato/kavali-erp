@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block title %}KAVALI ERP — {{ employee.full_name }}{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="crumb">Tableau de bord</a>
+<span class="sep">/</span>
+<a href="{{ url_for('rh.employees_list') }}" class="crumb">Employés</a>
+<span class="sep">/</span>
+<span class="current">{{ employee.full_name }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
+    <div>
+        <h1>{{ employee.full_name }}</h1>
+        <p class="text-muted">Matricule: <strong>{{ employee.matricule }}</strong></p>
+    </div>
+    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+        <a href="{{ url_for('rh.employee_edit', id=employee.id) }}" class="btn btn-primary">✏️ Modifier</a>
+        {% if employee.status == 'active' %}
+        <form method="POST" action="{{ url_for('rh.employee_archive', id=employee.id) }}" style="display:inline;">
+            <button type="submit" class="btn btn-destructive" onclick="return confirm('Archiver {{ employee.full_name }} ?')">📦 Archiver</button>
+        </form>
+        {% elif employee.status == 'archived' %}
+        <form method="POST" action="{{ url_for('rh.employee_activate', id=employee.id) }}" style="display:inline;">
+            <button type="submit" class="btn btn-success">🔄 Réactiver</button>
+        </form>
+        {% endif %}
+        <a href="{{ url_for('rh.employees_list') }}" class="btn btn-ghost">← Retour</a>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+    <!-- Left column: Identity + Contact -->
+    <div>
+        <!-- Identity Card -->
+        <div class="card" style="margin-bottom:1.5rem;">
+            <div class="card-header">
+                <div class="card-title">🧑 Identité</div>
+                <span class="badge {% if employee.status == 'active' %}badge-success{% elif employee.status == 'suspended' %}badge-warning{% else %}badge-default{% endif %}">
+                    {{ employee.status|capitalize }}
+                </span>
+            </div>
+            <div class="card-body">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+                    <div>
+                        <div style="font-size:0.75rem;color:var(--muted-foreground);">Prénom</div>
+                        <div style="font-weight:500;">{{ employee.first_name }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.75rem;color:var(--muted-foreground);">Nom</div>
+                        <div style="font-weight:500;">{{ employee.last_name }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.75rem;color:var(--muted-foreground);">Date de naissance</div>
+                        <div>{{ employee.birth_date.strftime('%d/%m/%Y') if employee.birth_date else '—' }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.75rem;color:var(--muted-foreground);">Lieu de naissance</div>
+                        <div>{{ employee.birth_place or '—' }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Card -->
+        <div class="card" style="margin-bottom:1.5rem;">
+            <div class="card-header">
+                <div class="card-title">📞 Coordonnées</div>
+            </div>
+            <div class="card-body">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+                    <div>
+                        <div style="font-size:0.75rem;color:var(--muted-foreground);">Email</div>
+                        <div>{{ employee.email or '—' }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.75rem;color:var(--muted-foreground);">Téléphone</div>
+                        <div>{{ employee.phone or '—' }}</div>
+                    </div>
+                    <div style="grid-column:1/-1;">
+                        <div style="font-size:0.75rem;color:var(--muted-foreground);">Adresse</div>
+                        <div>{{ employee.address or '—' }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Emergency Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">🚨 Contact urgence</div>
+            </div>
+            <div class="card-body">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+                    <div>
+                        <div style="font-size:0.75rem;color:var(--muted-foreground);">Nom</div>
+                        <div>{{ employee.emergency_contact or '—' }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.75rem;color:var(--muted-foreground);">Téléphone</div>
+                        <div>{{ employee.emergency_phone or '—' }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right column: Contract + Financial -->
+    <div>
+        <!-- Contract Card -->
+        <div class="card" style="margin-bottom:1.5rem;">
+            <div class="card-header">
+                <div class="card-title">📋 Contrat</div>
+                <span class="badge {% if employee.contract_type == 'CDI' %}badge-primary{% elif employee.contract_type == 'CDD' %}badge-warning{% else %}badge-default{% endif %}">
+                    {{ employee.contract_type }}
+                </span>
+            </div>
+            <div class="card-body">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+                    <div>
+                        <div style="font-size:0.75rem;color:var(--muted-foreground);">Poste</div>
+                        <div style="font-weight:500;">{{ employee.position or '—' }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.75rem;color:var(--muted-foreground);">Service</div>
+                        <div>{{ employee.service or '—' }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.75rem;color:var(--muted-foreground);">Catégorie</div>
+                        <div>{{ employee.category or '—' }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.75rem;color:var(--muted-foreground);">Échelon</div>
+                        <div>{{ employee.echelon or '—' }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.75rem;color:var(--muted-foreground);">Date d'embauche</div>
+                        <div>{{ employee.hire_date.strftime('%d/%m/%Y') if employee.hire_date else '—' }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.75rem;color:var(--muted-foreground);">Ancienneté</div>
+                        <div>{{ employee.contract_months }} mois</div>
+                    </div>
+                    {% if employee.contract_end %}
+                    <div style="grid-column:1/-1;">
+                        <div style="font-size:0.75rem;color:var(--muted-foreground);">Fin de contrat</div>
+                        <div style="font-weight:500;">
+                            {{ employee.contract_end.strftime('%d/%m/%Y') }}
+                            {% set days_left = (employee.contract_end - now().date()).days %}
+                            {% if days_left is defined and days_left <= 30 %}
+                            <span class="badge badge-destructive">⚠️ {{ days_left }} jours</span>
+                            {% elif days_left is defined and days_left <= 60 %}
+                            <span class="badge badge-warning">⏳ {{ days_left }} jours</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Financial Card -->
+        <div class="card" style="margin-bottom:1.5rem;">
+            <div class="card-header">
+                <div class="card-title">💰 Rémunération</div>
+            </div>
+            <div class="card-body">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+                    <div>
+                        <div style="font-size:0.75rem;color:var(--muted-foreground);">Salaire de base</div>
+                        <div style="font-size:1.25rem;font-weight:700;color:var(--kavali-vert);">
+                            {{ format_currency(employee.salary_base) }}
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.75rem;color:var(--muted-foreground);">N° CNPS</div>
+                        <div>{{ employee.cnps_number or '—' }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.75rem;color:var(--muted-foreground);">Compte bancaire</div>
+                        <div>{{ employee.bank_account or '—' }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notes Card -->
+        {% if employee.notes %}
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">📝 Notes</div>
+            </div>
+            <div class="card-body">
+                {{ employee.notes }}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+{% if employee.contract_end %}
+<script>
+// Pass contract_end days for Alpine if needed
+</scrpt>
+{% endif %}
+{% endblock %}

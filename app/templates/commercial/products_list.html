@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}KAVALI ERP — Produits{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="crumb">Tableau de bord</a>
+<span class="sep">/</span>
+<span class="current">Produits</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Produits</h1>
+        <p class="text-muted">Gestion des articles et stocks</p>
+    </div>
+    <a href="{{ url_for('commercial.product_new') }}" class="btn btn-primary">+ Nouveau produit</a>
+</div>
+
+<!-- Search -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <form method="GET" action="{{ url_for('commercial.products_list') }}" class="search-form">
+        <div class="form-row" style="display:flex;gap:1rem;align-items:end;">
+            <div class="form-group" style="flex:1;">
+                <input type="text" name="q" class="form-input" placeholder="Rechercher un produit (nom, réf, catégorie)..." value="{{ q }}">
+            </div>
+            <button type="submit" class="btn btn-primary">Rechercher</button>
+            {% if q %}
+            <a href="{{ url_for('commercial.products_list') }}" class="btn btn-ghost">Effacer</a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Products Table -->
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Réf.</th>
+                <th>Nom</th>
+                <th>Catégorie</th>
+                <th>Variante</th>
+                <th>Unité</th>
+                <th>Prix</th>
+                <th>Stock</th>
+                <th>Seuil min</th>
+                <th>Statut</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in products.items %}
+            <tr>
+                <td><code>{{ p.reference }}</code></td>
+                <td style="font-weight:600;">{{ p.name }}</td>
+                <td>{{ p.category or '—' }}</td>
+                <td>{{ p.variant or '—' }}</td>
+                <td>{{ p.unit or 'unité' }}</td>
+                <td style="font-weight:500;">{{ "{:,.0f} FCFA".format(p.price|float).replace(',', ' ') if p.price else '0 FCFA' }}</td>
+                <td>
+                    {% if p.stock_qty is not none and p.stock_min is not none and p.stock_qty|float <= p.stock_min|float %}
+                    <span style="color:#EF4444;font-weight:600;">{{ p.stock_qty }}</span>
+                    {% else %}
+                    <span style="font-weight:500;">{{ p.stock_qty }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ p.stock_min }}</td>
+                <td>
+                    {% if p.is_active %}
+                    <span class="badge badge-success">Actif</span>
+                    {% else %}
+                    <span class="badge badge-destructive">Inactif</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="action-btns">
+                        <a href="{{ url_for('commercial.product_edit', id=p.id) }}" class="btn btn-sm btn-ghost">Modifier</a>
+                        {% if p.is_active %}
+                        <form method="POST" action="{{ url_for('commercial.product_delete', id=p.id) }}" style="display:inline;">
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Désactiver ce produit ?')">Désactiver</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="10" style="text-align:center;padding:2.5rem;color:var(--muted-foreground);">
+                    {% if q %}
+                    Aucun produit trouvé pour "{{ q }}".
+                    {% else %}
+                    Aucun produit enregistré. <a href="{{ url_for('commercial.product_new') }}">Créer le premier produit</a>.
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+{% if products.pages > 1 %}
+<div class="pagination" style="display:flex;justify-content:center;gap:0.5rem;margin-top:1.5rem;">
+    {% if products.has_prev %}
+    <a href="{{ url_for('commercial.products_list', page=products.prev_num, q=q) }}" class="btn btn-sm btn-ghost">&laquo; Précédent</a>
+    {% endif %}
+    {% for p in products.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+        {% if p %}
+        <a href="{{ url_for('commercial.products_list', page=p, q=q) }}" class="btn btn-sm {% if p == products.page %}btn-primary{% else %}btn-ghost{% endif %}">{{ p }}</a>
+        {% else %}
+        <span class="btn btn-sm btn-ghost disabled">...</span>
+        {% endif %}
+    {% endfor %}
+    {% if products.has_next %}
+    <a href="{{ url_for('commercial.products_list', page=products.next_num, q=q) }}" class="btn btn-sm btn-ghost">Suivant &raquo;</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

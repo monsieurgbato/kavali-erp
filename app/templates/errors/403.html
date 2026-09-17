@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}KAVALI ERP — Accès refusé{% endblock %}
+
+{% block content %}
+<div style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:60vh; text-align:center; padding:2rem;">
+    <div style="font-size:6rem; font-weight:900; color:rgba(10,56,9,0.06); line-height:1; margin-bottom:-2.5rem; user-select:none;">403</div>
+    <div style="font-size:72px; margin-bottom:1rem; line-height:1;">🔒</div>
+    <h1 style="font-size:2.5rem; font-weight:800; color:#0A3809; margin-bottom:0.25rem; letter-spacing:-0.02em;">Accès refusé</h1>
+    <p style="color:#6B7280; margin-bottom:1.5rem; max-width:420px; line-height:1.6;">
+        Vous n'avez pas les permissions nécessaires pour accéder à cette page.
+    </p>
+    <div style="font-size:0.8rem; color:#6B7280; background:#F3F4F6; padding:0.5rem 1rem; border-radius:8px; margin-bottom:2rem; max-width:500px;">
+        Contactez votre administrateur si vous pensez qu'il s'agit d'une erreur.
+    </div>
+    <a href="{{ url_for('dashboard.index') }}" class="btn btn-primary">
+        ← Retour au tableau de bord
+    </a>
+</div>
+{% endblock %}

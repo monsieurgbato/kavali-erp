@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}KAVALI ERP — Contrats{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="crumb">Tableau de bord</a>
+<span class="sep">/</span>
+<span class="current">Contrats</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
+    <div>
+        <h1>Contrats</h1>
+        <p class="text-muted">Gestion des contrats de travail</p>
+    </div>
+    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+        <a href="{{ url_for('rh.contracts_expiring') }}" class="btn btn-warning">⏳ Contrats expirants</a>
+        <a href="{{ url_for('rh.employees_list') }}" class="btn btn-ghost">← Employés</a>
+    </div>
+</div>
+
+<!-- Expiry alerts -->
+{% set ns = namespace(danger=0, warning=0) %}
+{% for emp in employees %}
+    {% if emp._expiry_class == 'danger' %}{% set ns.danger = ns.danger + 1 %}{% endif %}
+    {% if emp._expiry_class == 'warning' %}{% set ns.warning = ns.warning + 1 %}{% endif %}
+{% endfor %}
+
+{% if ns.danger > 0 %}
+<div class="alert alert-destructive" style="margin-bottom:1rem;">
+    <span>🚨</span>
+    <span><strong>{{ ns.danger }} contrat(s)</strong> expirent dans moins de 30 jours !</span>
+</div>
+{% endif %}
+
+{% if ns.warning > 0 %}
+<div class="alert alert-warning" style="margin-bottom:1rem;">
+    <span>⏳</span>
+    <span><strong>{{ ns.warning }} contrat(s)</strong> expirent dans moins de 60 jours.</span>
+</div>
+{% endif %}
+
+<!-- Search -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <form method="GET" action="{{ url_for('rh.contracts_list') }}" class="search-form">
+        <div style="display:flex;gap:1rem;align-items:end;">
+            <div class="form-group" style="flex:1;margin-bottom:0;">
+                <input type="text" name="q" class="form-input" placeholder="Rechercher par nom ou matricule..." value="{{ q }}">
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-bottom:0;">Rechercher</button>
+            {% if q %}
+            <a href="{{ url_for('rh.contracts_list') }}" class="btn btn-ghost" style="margin-bottom:0;">Effacer</a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Contracts Table -->
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Matricule</th>
+                <th>Employé</th>
+                <th>Type</th>
+                <th>Poste</th>
+                <th>Service</th>
+                <th>Date d'embauche</th>
+                <th>Fin de contrat</th>
+                <th>Jours restants</th>
+                <th>Statut</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for emp in employees %}
+            <tr>
+                <td><span class="badge badge-secondary">{{ emp.matricule }}</span></td>
+                <td>
+                    <a href="{{ url_for('rh.employee_detail', id=emp.id) }}" class="cell-link" style="font-weight:600;">
+                        {{ emp.last_name }} {{ emp.first_name }}
+                    </a>
+                </td>
+                <td>
+                    {% if emp.contract_type == 'CDI' %}
+                    <span class="badge badge-primary">CDI</span>
+                    {% elif emp.contract_type == 'CDD' %}
+                    <span class="badge badge-warning">CDD</span>
+                    {% else %}
+                    <span class="badge badge-default">{{ emp.contract_type }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ emp.position or '—' }}</td>
+                <td>{{ emp.service or '—' }}</td>
+                <td>{{ emp.hire_date.strftime('%d/%m/%Y') if emp.hire_date else '—' }}</td>
+                <td>
+                    {% if emp.contract_end %}
+                    {{ emp.contract_end.strftime('%d/%m/%Y') }}
+                    {% else %}
+                    <span class="text-muted">Indéterminé</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if emp._days_left is not none %}
+                        {% if emp._expiry_class == 'danger' %}
+                        <span class="badge badge-destructive">{{ emp._days_left }} jours</span>
+                        {% elif emp._expiry_class == 'warning' %}
+                        <span class="badge badge-warning">{{ emp._days_left }} jours</span>
+                        {% else %}
+                        <span class="badge badge-success">{{ emp._days_left }} jours</span>
+                        {% endif %}
+                    {% else %}
+                    <span class="badge badge-success">—</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if emp.status == 'active' %}
+                    <span class="badge badge-success">Actif</span>
+                    {% else %}
+                    <span class="badge badge-default">{{ emp.status|capitalize }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{{ url_for('rh.employee_detail', id=emp.id) }}" class="btn btn-sm btn-ghost">Voir</a>
+                    <a href="{{ url_for('rh.employee_edit', id=emp.id) }}" class="btn btn-sm btn-ghost">✏️</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="10" style="text-align:center;padding:2.5rem;color:var(--muted-foreground);">
+                    {% if q %}
+                    Aucun contrat trouvé pour "{{ q }}".
+                    {% elif expiring_filter %}
+                    Aucun contrat n'expire dans les 60 prochains jours.
+                    {% else %}
+                    Aucun contrat enregistré.
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

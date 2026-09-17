@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}KAVALI ERP — Chauffeurs{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="crumb">Tableau de bord</a>
+<span class="sep">/</span>
+<a href="{{ url_for('fleet.vehicles_list') }}" class="crumb">Flotte</a>
+<span class="sep">/</span>
+<span class="current">Chauffeurs</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Chauffeurs</h1>
+        <p class="text-muted">Gestion des conducteurs</p>
+    </div>
+    <a href="{{ url_for('fleet.driver_new') }}" class="btn btn-primary">+ Nouveau chauffeur</a>
+</div>
+
+<!-- Search & Filter -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <form method="GET" action="{{ url_for('fleet.drivers_list') }}" class="search-form">
+        <div class="form-row" style="display:flex;gap:1rem;align-items:end;flex-wrap:wrap;">
+            <div class="form-group" style="flex:1;min-width:200px;">
+                <input type="text" name="q" class="form-input" placeholder="Rechercher un chauffeur..." value="{{ q }}">
+            </div>
+            <div class="form-group" style="min-width:150px;">
+                <select name="status" class="form-input">
+                    <option value="">Tous les statuts</option>
+                    {% for st in driver_statuses %}
+                    <option value="{{ st }}" {% if status == st %}selected{% endif %}>{{ st|capitalize }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Filtrer</button>
+            {% if q or status %}
+            <a href="{{ url_for('fleet.drivers_list') }}" class="btn btn-ghost">Effacer</a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Drivers Table -->
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Téléphone</th>
+                <th>Email</th>
+                <th>Permis</th>
+                <th>Catégorie</th>
+                <th>Expiration permis</th>
+                <th>Statut</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for d in drivers.items %}
+            <tr>
+                <td style="font-weight:600;">{{ d.full_name }}</td>
+                <td>{{ d.phone or '—' }}</td>
+                <td>{{ d.email or '—' }}</td>
+                <td>{{ d.license_number or '—' }}</td>
+                <td><span class="badge badge-default">{{ d.license_category }}</span></td>
+                <td>
+                    {% if d.license_expiry %}
+                    {{ d.license_expiry.strftime('%d/%m/%Y') }}
+                    {% else %}
+                    —
+                    {% endif %}
+                </td>
+                <td>{{ badge(d.status)|safe }}</td>
+                <td>
+                    <div class="action-btns">
+                        <a href="{{ url_for('fleet.driver_edit', id=d.id) }}" class="btn btn-sm btn-ghost">Modifier</a>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="8" style="text-align:center;padding:2.5rem;color:var(--muted-foreground);">
+                    {% if q or status %}
+                    Aucun chauffeur trouvé.
+                    {% else %}
+                    Aucun chauffeur enregistré. <a href="{{ url_for('fleet.driver_new') }}">Ajouter un chauffeur</a>.
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+{% if drivers.pages > 1 %}
+<div class="pagination" style="display:flex;justify-content:center;gap:0.5rem;margin-top:1.5rem;">
+    {% if drivers.has_prev %}
+    <a href="{{ url_for('fleet.drivers_list', page=drivers.prev_num, q=q, status=status) }}" class="btn btn-sm btn-ghost">&laquo; Précédent</a>
+    {% endif %}
+    {% for p in drivers.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+        {% if p %}
+        <a href="{{ url_for('fleet.drivers_list', page=p, q=q, status=status) }}" class="btn btn-sm {% if p == drivers.page %}btn-primary{% else %}btn-ghost{% endif %}">{{ p }}</a>
+        {% else %}
+        <span class="btn btn-sm btn-ghost disabled">...</span>
+        {% endif %}
+    {% endfor %}
+    {% if drivers.has_next %}
+    <a href="{{ url_for('fleet.drivers_list', page=drivers.next_num, q=q, status=status) }}" class="btn btn-sm btn-ghost">Suivant &raquo;</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

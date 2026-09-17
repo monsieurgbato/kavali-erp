@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 50" fill="none">
+  <defs>
+    <linearGradient id="goldGradLight" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#D4B96A"/>
+      <stop offset="50%" stop-color="#B8A15A"/>
+      <stop offset="100%" stop-color="#E8D48B"/>
+    </linearGradient>
+  </defs>
+
+  <!-- K-icon diamond badge -->
+  <rect x="2" y="7" width="36" height="36" rx="8" fill="url(#goldGradLight)"/>
+  <path d="M14 16 L20 25 L26 16 M20 25 V34" stroke="#0A3809" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- KAVALI text -->
+  <text x="46" y="30" font-family="'Inter', 'Segoe UI', Arial, sans-serif" font-weight="800" font-size="22" fill="#FFFFFF" letter-spacing="2">KAVALI</text>
+
+  <!-- ERP badge -->
+  <rect x="128" y="17" width="42" height="16" rx="4" fill="url(#goldGradLight)" opacity="0.9"/>
+  <text x="149" y="29" font-family="'Inter', 'Segoe UI', Arial, sans-serif" font-weight="700" font-size="9" fill="#0A3809" text-anchor="middle" letter-spacing="0.5">ERP</text>
+
+  <!-- Small subtitle -->
+  <text x="46" y="46" font-family="'Inter', 'Segoe UI', Arial, sans-serif" font-weight="500" font-size="8" fill="#B8A15A" letter-spacing="4">GESTION INTELLIGENTE</text>
+</svg>

@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}KAVALI ERP — Fournisseurs{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="crumb">Tableau de bord</a>
+<span class="sep">/</span>
+<a href="{{ url_for('logistique.stock_overview') }}" class="crumb">Stock</a>
+<span class="sep">/</span>
+<span class="current">Fournisseurs</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Fournisseurs</h1>
+        <p class="text-muted">Gestion des fournisseurs et prestataires</p>
+    </div>
+    <a href="{{ url_for('logistique.supplier_new') }}" class="btn btn-primary">+ Nouveau fournisseur</a>
+</div>
+
+<!-- Search -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <form method="GET" action="{{ url_for('logistique.suppliers_list') }}" class="search-form">
+        <div class="form-row" style="display:flex;gap:1rem;align-items:end;">
+            <div class="form-group" style="flex:1;">
+                <input type="text" name="q" class="form-input" placeholder="Rechercher un fournisseur..." value="{{ q }}">
+            </div>
+            <button type="submit" class="btn btn-primary">Rechercher</button>
+            {% if q %}
+            <a href="{{ url_for('logistique.suppliers_list') }}" class="btn btn-ghost">Effacer</a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Suppliers Table -->
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Contact</th>
+                <th>Téléphone</th>
+                <th>Email</th>
+                <th>Service</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in suppliers.items %}
+            <tr>
+                <td style="font-weight:600;">{{ s.name }}</td>
+                <td>{{ s.contact or '—' }}</td>
+                <td>{{ s.phone or '—' }}</td>
+                <td>{{ s.email or '—' }}</td>
+                <td>{{ s.service_type or '—' }}</td>
+                <td>
+                    <div class="action-btns">
+                        <a href="{{ url_for('logistique.supplier_edit', id=s.id) }}" class="btn btn-sm btn-ghost">Modifier</a>
+                        <form method="POST" action="{{ url_for('logistique.supplier_delete', id=s.id) }}" style="display:inline;">
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Désactiver ce fournisseur ?')">Désactiver</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" style="text-align:center;padding:2.5rem;color:var(--muted-foreground);">
+                    {% if q %}
+                    Aucun fournisseur trouvé pour "{{ q }}".
+                    {% else %}
+                    Aucun fournisseur enregistré. <a href="{{ url_for('logistique.supplier_new') }}">Ajouter un fournisseur</a>.
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+{% if suppliers.pages > 1 %}
+<div class="pagination" style="display:flex;justify-content:center;gap:0.5rem;margin-top:1.5rem;">
+    {% if suppliers.has_prev %}
+    <a href="{{ url_for('logistique.suppliers_list', page=suppliers.prev_num, q=q) }}" class="btn btn-sm btn-ghost">&laquo; Précédent</a>
+    {% endif %}
+    {% for p in suppliers.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+        {% if p %}
+        <a href="{{ url_for('logistique.suppliers_list', page=p, q=q) }}" class="btn btn-sm {% if p == suppliers.page %}btn-primary{% else %}btn-ghost{% endif %}">{{ p }}</a>
+        {% else %}
+        <span class="btn btn-sm btn-ghost disabled">...</span>
+        {% endif %}
+    {% endfor %}
+    {% if suppliers.has_next %}
+    <a href="{{ url_for('logistique.suppliers_list', page=suppliers.next_num, q=q) }}" class="btn btn-sm btn-ghost">Suivant &raquo;</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

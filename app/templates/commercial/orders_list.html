@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}KAVALI ERP — Commandes{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="crumb">Tableau de bord</a>
+<span class="sep">/</span>
+<span class="current">Commandes</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Commandes</h1>
+        <p class="text-muted">Gestion des commandes clients</p>
+    </div>
+    <div style="display:flex;gap:0.5rem;">
+        <a href="{{ url_for('commercial.order_new') }}" class="btn btn-primary">+ Nouvelle commande</a>
+        <a href="{{ url_for('commercial.devis_list') }}" class="btn btn-ghost">Devis</a>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <form method="GET" action="{{ url_for('commercial.orders_list') }}" class="filter-form">
+        <div class="form-row" style="display:flex;gap:1rem;flex-wrap:wrap;align-items:end;">
+            <div class="form-group" style="flex:1;min-width:180px;">
+                <label class="form-label" style="font-size:0.85rem;">Recherche</label>
+                <input type="text" name="q" class="form-input" placeholder="Réf. ou client..." value="{{ q }}">
+            </div>
+            <div class="form-group" style="min-width:140px;">
+                <label class="form-label" style="font-size:0.85rem;">Statut</label>
+                <select name="status" class="form-input">
+                    <option value="">Tous</option>
+                    <option value="pending" {% if status == 'pending' %}selected{% endif %}>En attente</option>
+                    <option value="paid" {% if status == 'paid' %}selected{% endif %}>Payée</option>
+                    <option value="delivering" {% if status == 'delivering' %}selected{% endif %}>En livraison</option>
+                    <option value="delivered" {% if status == 'delivered' %}selected{% endif %}>Livrée</option>
+                    <option value="cancelled" {% if status == 'cancelled' %}selected{% endif %}>Annulée</option>
+                </select>
+            </div>
+            <div class="form-group" style="min-width:120px;">
+                <label class="form-label" style="font-size:0.85rem;">Du</label>
+                <input type="date" name="date_from" class="form-input" value="{{ date_from }}">
+            </div>
+            <div class="form-group" style="min-width:120px;">
+                <label class="form-label" style="font-size:0.85rem;">Au</label>
+                <input type="date" name="date_to" class="form-input" value="{{ date_to }}">
+            </div>
+            <button type="submit" class="btn btn-primary">Filtrer</button>
+            {% if status or q or date_from or date_to %}
+            <a href="{{ url_for('commercial.orders_list') }}" class="btn btn-ghost">Effacer</a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Orders Table -->
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Réf.</th>
+                <th>Client</th>
+                <th>Date</th>
+                <th>Montant</th>
+                <th>Statut</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for o in orders.items %}
+            <tr>
+                <td><a href="{{ url_for('commercial.order_detail', id=o.id) }}" class="cell-link" style="font-weight:600;">{{ o.reference }}</a></td>
+                <td>{{ o.client.name if o.client else '—' }}</td>
+                <td>{{ o.created_at.strftime('%d/%m/%Y %H:%M') if o.created_at else '—' }}</td>
+                <td style="font-weight:500;">{{ format_currency(o.total) }}</td>
+                <td>{{ badge(o.status)|safe }}</td>
+                <td>
+                    <div class="action-btns">
+                        <a href="{{ url_for('commercial.order_detail', id=o.id) }}" class="btn btn-sm btn-ghost">Voir</a>
+                        {% if o.status not in ('paid', 'delivered', 'cancelled') %}
+                        <a href="{{ url_for('commercial.order_edit', id=o.id) }}" class="btn btn-sm btn-ghost">Modifier</a>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" style="text-align:center;padding:2.5rem;color:var(--muted-foreground);">
+                    {% if status or q %}
+                    Aucune commande trouvée pour ces filtres.
+                    {% else %}
+                    Aucune commande enregistrée. <a href="{{ url_for('commercial.order_new') }}">Créer la première commande</a>.
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+{% if orders.pages > 1 %}
+<div class="pagination" style="display:flex;justify-content:center;gap:0.5rem;margin-top:1.5rem;">
+    {% if orders.has_prev %}
+    <a href="{{ url_for('commercial.orders_list', page=orders.prev_num, status=status, q=q, date_from=date_from, date_to=date_to) }}" class="btn btn-sm btn-ghost">&laquo; Précédent</a>
+    {% endif %}
+    {% for p in orders.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+        {% if p %}
+        <a href="{{ url_for('commercial.orders_list', page=p, status=status, q=q, date_from=date_from, date_to=date_to) }}" class="btn btn-sm {% if p == orders.page %}btn-primary{% else %}btn-ghost{% endif %}">{{ p }}</a>
+        {% else %}
+        <span class="btn btn-sm btn-ghost disabled">...</span>
+        {% endif %}
+    {% endfor %}
+    {% if orders.has_next %}
+    <a href="{{ url_for('commercial.orders_list', page=orders.next_num, status=status, q=q, date_from=date_from, date_to=date_to) }}" class="btn btn-sm btn-ghost">Suivant &raquo;</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}KAVALI ERP — {{ client.name }}{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="crumb">Tableau de bord</a>
+<span class="sep">/</span>
+<a href="{{ url_for('commercial.clients_list') }}" class="crumb">Clients</a>
+<span class="sep">/</span>
+<span class="current">{{ client.name }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>{{ client.name }}</h1>
+        <p class="text-muted">{{ 'Prospect' if client.is_prospect else 'Client' }} — Créé le {{ client.created_at.strftime('%d/%m/%Y') if client.created_at else '—' }}</p>
+    </div>
+    <div style="display:flex;gap:0.5rem;">
+        <a href="{{ url_for('commercial.client_edit', id=client.id) }}" class="btn btn-primary">Modifier</a>
+        <form method="POST" action="{{ url_for('commercial.client_delete', id=client.id) }}" style="display:inline;">
+            <button type="submit" class="btn btn-danger" onclick="return confirm('Confirmer l\'archivage ?')">Archiver</button>
+        </form>
+    </div>
+</div>
+
+<div class="grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem;">
+    <!-- Info Card -->
+    <div class="card">
+        <div class="card-header">
+            <h3>Informations</h3>
+        </div>
+        <div class="card-body">
+            <table class="info-table" style="width:100%;">
+                <tr>
+                    <td style="padding:0.5rem 0;color:var(--muted-foreground);font-weight:500;">Contact</td>
+                    <td style="padding:0.5rem 0;">{{ client.contact or '—' }}</td>
+                </tr>
+                <tr>
+                    <td style="padding:0.5rem 0;color:var(--muted-foreground);font-weight:500;">Téléphone</td>
+                    <td style="padding:0.5rem 0;">{{ client.phone or '—' }}</td>
+                </tr>
+                <tr>
+                    <td style="padding:0.5rem 0;color:var(--muted-foreground);font-weight:500;">Email</td>
+                    <td style="padding:0.5rem 0;">{{ client.email or '—' }}</td>
+                </tr>
+                <tr>
+                    <td style="padding:0.5rem 0;color:var(--muted-foreground);font-weight:500;">Zone</td>
+                    <td style="padding:0.5rem 0;">{{ client.zone or '—' }}</td>
+                </tr>
+                <tr>
+                    <td style="padding:0.5rem 0;color:var(--muted-foreground);font-weight:500;">Adresse</td>
+                    <td style="padding:0.5rem 0;">{{ client.address or '—' }}</td>
+                </tr>
+                <tr>
+                    <td style="padding:0.5rem 0;color:var(--muted-foreground);font-weight:500;">Note</td>
+                    <td style="padding:0.5rem 0;">
+                        <span style="display:inline-block;width:28px;height:28px;border-radius:50%;background:{{ note_color(client.note) }};color:#fff;text-align:center;line-height:28px;font-weight:700;font-size:0.8rem;">
+                            {{ client.note or 'C' }}
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:0.5rem 0;color:var(--muted-foreground);font-weight:500;">Statut</td>
+                    <td style="padding:0.5rem 0;">
+                        {% if client.is_prospect %}
+                        <span class="badge badge-default">Prospect</span>
+                        {% else %}
+                        <span class="badge badge-success">Client</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- Stats Card -->
+    <div class="card">
+        <div class="card-header">
+            <h3>Activité</h3>
+        </div>
+        <div class="card-body">
+            <table class="info-table" style="width:100%;">
+                <tr>
+                    <td style="padding:0.5rem 0;color:var(--muted-foreground);font-weight:500;">Total commandes</td>
+                    <td style="padding:0.5rem 0;font-weight:600;">{{ orders|length }}</td>
+                </tr>
+                <tr>
+                    <td style="padding:0.5rem 0;color:var(--muted-foreground);font-weight:500;">Client depuis</td>
+                    <td style="padding:0.5rem 0;">{{ client.created_at.strftime('%d/%m/%Y') if client.created_at else '—' }}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Orders table -->
+<div class="section-title" style="margin-top:1.5rem;">Commandes</div>
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Réf.</th>
+                <th>Date</th>
+                <th>Montant</th>
+                <th>Statut</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for o in orders %}
+            <tr>
+                <td><a href="{{ url_for('commercial.order_detail', id=o.id) }}" class="cell-link">{{ o.reference }}</a></td>
+                <td>{{ o.created_at.strftime('%d/%m/%Y %H:%M') if o.created_at else '—' }}</td>
+                <td style="font-weight:500;">{{ format_currency(o.total) }}</td>
+                <td>{{ badge(o.status)|safe }}</td>
+                <td>
+                    <a href="{{ url_for('commercial.order_detail', id=o.id) }}" class="btn btn-sm btn-ghost">Voir</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" style="text-align:center;padding:2.5rem;color:var(--muted-foreground);">
+                    Aucune commande pour ce client.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

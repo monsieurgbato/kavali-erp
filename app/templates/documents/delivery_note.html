@@ -1,0 +1,74 @@
+{% extends 'documents/document_base.html' %}
+
+{% block content %}
+
+<!-- Client & Delivery Info -->
+<div class="info-row">
+    <div class="info-block">
+        <h3>Client</h3>
+        <p>
+            <strong>{{ order.client.name if order.client else '—' }}</strong><br>
+            {% if order.client and order.client.address %}{{ order.client.address }}<br>{% endif %}
+            {% if order.client and order.client.phone %}{{ order.client.phone }}<br>{% endif %}
+        </p>
+    </div>
+    <div class="info-block" style="text-align:right;">
+        <h3>Livraison</h3>
+        <p>
+            <span class="label">Adresse:</span> {{ order.delivery_address or (order.client.address if order.client else '—') }}<br>
+            <span class="label">Ville:</span> {{ order.delivery_city or '—' }}<br>
+            {% if order.delivery_date %}
+            <span class="label">Date livraison:</span> {{ order.delivery_date.strftime('%d/%m/%Y') }}<br>
+            {% endif %}
+            <span class="label">Date document:</span> {{ order.created_at.strftime('%d/%m/%Y') if order.created_at else '' }}
+        </p>
+    </div>
+</div>
+
+<!-- Items Table -->
+<table>
+    <thead>
+        <tr>
+            <th style="width:40px;">#</th>
+            <th>Description</th>
+            <th style="width:60px; text-align:center;">Qté</th>
+            <th style="width:90px; text-align:right;">Prix unitaire</th>
+            <th style="width:90px; text-align:right;">Total</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in order.items %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ item.product.name if item.product else 'Article' }}</td>
+            <td style="text-align:center;">{{ item.quantity }}</td>
+            <td style="text-align:right;">{{ "{:,.0f}".format(item.unit_price|float).replace(',', ' ') }} FCFA</td>
+            <td style="text-align:right;">{{ "{:,.0f}".format(item.total|float).replace(',', ' ') }} FCFA</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Totals -->
+<div class="totals">
+    <table>
+        <tr class="total-line">
+            <td>Total {{ doc_type }}</td>
+            <td>{{ "{:,.0f}".format(order.total|float).replace(',', ' ') }} FCFA</td>
+        </tr>
+    </table>
+</div>
+
+<!-- Signature Section -->
+<div class="signatures">
+    <div class="signature-box">
+        <div class="line">Signature du client</div>
+        <div class="title">Nom & signature — « Bon de réception »</div>
+    </div>
+    <div class="signature-box">
+        <div class="line">Livreur / Transporteur</div>
+        <div class="title">Nom & signature</div>
+    </div>
+</div>
+
+{% endblock %}

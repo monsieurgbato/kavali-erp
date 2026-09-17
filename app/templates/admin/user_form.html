@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}KAVALI ERP — {{ 'Modifier' if user else 'Nouvel' }} utilisateur{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="crumb">Tableau de bord</a>
+<span class="sep">/</span>
+<a href="{{ url_for('admin.users_list') }}" class="crumb">Utilisateurs</a>
+<span class="sep">/</span>
+<span class="current">{{ 'Modifier' if user else 'Nouvel utilisateur' }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;">
+    <div>
+        <h1>{{ 'Modifier' if user else 'Nouvel' }} utilisateur</h1>
+        <p class="text-muted">
+            {% if user %}
+            @{{ user.username }} · {{ user.email }}
+            {% else %}
+            Créer un compte utilisateur pour accéder à KAVALI ERP
+            {% endif %}
+        </p>
+    </div>
+</div>
+
+<div class="card" style="max-width:960px;">
+    <form method="POST" action="{% if user %}{{ url_for('admin.user_update', id=user.id) }}{% else %}{{ url_for('admin.user_create') }}{% endif %}" class="form">
+        <!-- Section 1: Identité -->
+        <div class="section-title">🧑 Identité</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+            <div class="form-group">
+                <label class="form-label">Nom complet</label>
+                <input type="text" name="full_name" class="form-input"
+                       value="{{ user.full_name if user else '' }}" placeholder="Prénom et nom">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Téléphone</label>
+                <input type="text" name="phone" class="form-input"
+                       value="{{ user.phone if user else '' }}" placeholder="+225 00 00 00 00">
+            </div>
+        </div>
+
+        <!-- Section 2: Authentification -->
+        <div class="section-title" style="margin-top:2rem;">🔐 Authentification</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+            <div class="form-group">
+                <label class="form-label">Nom d'utilisateur *</label>
+                <input type="text" name="username" class="form-input" required
+                       value="{{ user.username if user else '' }}" placeholder="Identifiant de connexion">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Email *</label>
+                <input type="email" name="email" class="form-input" required
+                       value="{{ user.email if user else '' }}" placeholder="email@exemple.com">
+            </div>
+            {% if not user %}
+            <div class="form-group">
+                <label class="form-label">Mot de passe *</label>
+                <input type="password" name="password" class="form-input" required
+                       placeholder="Mot de passe sécurisé">
+                <p class="form-hint">Minimum 8 caractères</p>
+            </div>
+            {% else %}
+            <div class="form-group">
+                <label class="form-label">Mot de passe</label>
+                <input type="text" class="form-input" value="••••••••" disabled>
+                <p class="form-hint">
+                    <a href="#" onclick="if(confirm('Réinitialiser le mot de passe ?')){document.getElementById('reset-pwd-form').submit();}return false;" style="color:var(--secondary);">
+                        🔑 Réinitialiser le mot de passe
+                    </a>
+                </p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Section 3: Rôle & Service -->
+        <div class="section-title" style="margin-top:2rem;">👔 Rôle & Service</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+            <div class="form-group">
+                <label class="form-label">Rôle</label>
+                <select name="role_id" class="form-select">
+                    <option value="">Sélectionner un rôle...</option>
+                    {% for r in roles %}
+                    <option value="{{ r.id }}" {% if user and user.role_id == r.id %}selected{% endif %}>{{ r.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Service</label>
+                <select name="service" class="form-select">
+                    <option value="">Sélectionner un service...</option>
+                    {% for s in services %}
+                    <option value="{{ s }}" {% if user and user.service == s %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Poste / Fonction</label>
+                <select name="position" class="form-select">
+                    <option value="">Sélectionner un poste...</option>
+                    {% for p in positions %}
+                    <option value="{{ p }}" {% if user and user.position == p %}selected{% endif %}>{{ p }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-actions" style="display:flex;gap:1rem;margin-top:2rem;">
+            <button type="submit" class="btn btn-primary btn-lg">
+                {% if user %}Mettre à jour{% else %}Créer l'utilisateur{% endif %}
+            </button>
+            <a href="{{ url_for('admin.users_list') }}" class="btn btn-ghost btn-lg">Annuler</a>
+        </div>
+    </form>
+</div>
+
+{% if user %}
+<!-- Hidden reset password form -->
+<form id="reset-pwd-form" method="POST" action="{{ url_for('admin.user_reset_password', id=user.id) }}" style="display:none;"></form>
+{% endif %}
+{% endblock %}

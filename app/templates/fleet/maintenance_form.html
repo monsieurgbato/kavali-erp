@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}KAVALI ERP — Nouvelle maintenance{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="crumb">Tableau de bord</a>
+<span class="sep">/</span>
+<a href="{{ url_for('fleet.vehicles_list') }}" class="crumb">Flotte</a>
+<span class="sep">/</span>
+<a href="{{ url_for('fleet.maintenance_list') }}" class="crumb">Maintenance</a>
+<span class="sep">/</span>
+<span class="current">Nouvelle</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Nouvelle maintenance</h1>
+        <p class="text-muted">Enregistrer un entretien ou une réparation</p>
+    </div>
+</div>
+
+<div class="card" style="max-width:800px;">
+    <form method="POST" action="{{ url_for('fleet.maintenance_create') }}" class="form">
+        <div class="form-group">
+            <label class="form-label">Véhicule *</label>
+            <select name="vehicle_id" class="form-input" required>
+                <option value="">Sélectionner un véhicule...</option>
+                {% for v in vehicles %}
+                <option value="{{ v.id }}">{{ v.immatriculation }} — {{ v.brand }} {{ v.model }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+            <div class="form-group">
+                <label class="form-label">Date</label>
+                <input type="date" name="date" class="form-input" value="{{ '' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Type</label>
+                <select name="type" class="form-input">
+                    <option value="">Sélectionner...</option>
+                    {% for t in maintenance_types %}
+                    <option value="{{ t }}">{{ t|capitalize }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Coût (FCFA)</label>
+                <input type="number" name="cost" class="form-input" step="0.01" min="0" placeholder="0" value="">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Prestataire</label>
+                <input type="text" name="provider" class="form-input" placeholder="Garage, fournisseur..." value="">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Prochaine échéance (date)</label>
+                <input type="date" name="next_due_date" class="form-input" value="">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Prochaine échéance (km)</label>
+                <input type="number" name="next_due_km" class="form-input" min="0" placeholder="0" value="">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Statut</label>
+                <select name="status" class="form-input">
+                    {% for st in statuses %}
+                    <option value="{{ st }}" {% if loop.first %}selected{% endif %}>{{ st|capitalize }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Description</label>
+            <textarea name="description" class="form-input" rows="3" placeholder="Description détaillée de l'intervention..."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Notes</label>
+            <textarea name="notes" class="form-input" rows="2" placeholder="Notes internes..."></textarea>
+        </div>
+
+        <div class="form-actions" style="display:flex;gap:1rem;margin-top:1.5rem;">
+            <button type="submit" class="btn btn-primary btn-lg">Enregistrer la maintenance</button>
+            <a href="{{ url_for('fleet.maintenance_list') }}" class="btn btn-ghost btn-lg">Annuler</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,112 @@
+{% extends 'documents/document_base.html' %}
+
+{% block content %}
+
+<!-- Client & Order Info -->
+<div class="info-row">
+    <div class="info-block">
+        <h3>Client</h3>
+        <p>
+            <strong>{{ order.client.name if order.client else '—' }}</strong><br>
+            {% if order.client and order.client.address %}{{ order.client.address }}<br>{% endif %}
+            {% if order.client and order.client.phone %}{{ order.client.phone }}<br>{% endif %}
+            {% if order.client and order.client.email %}{{ order.client.email }}<br>{% endif %}
+            {% if order.client and order.client.zone %}<span class="label">Zone:</span> {{ order.client.zone }}{% endif %}
+        </p>
+    </div>
+    <div class="info-block" style="text-align:right;">
+        <h3>Références</h3>
+        <p>
+            <span class="label">Date:</span> {{ order.created_at.strftime('%d/%m/%Y') if order.created_at else '' }}<br>
+            {% if order.validated_by %}
+            <span class="label">Validée par:</span> {{ order.validated_by.full_name }}<br>
+            {% endif %}
+            <span class="label">Statut:</span> {{ order.status|upper }}<br>
+            {% if order.payment_method %}
+            <span class="label">Paiement:</span> {{ order.payment_method }}<br>
+            {% endif %}
+            {% if order.delivery_type %}
+            <span class="label">Livraison:</span> {{ 'Immédiate' if order.delivery_type == 'immediate' else 'Programmée' }}
+            {% endif %}
+        </p>
+    </div>
+</div>
+
+<!-- Items Table -->
+<table>
+    <thead>
+        <tr>
+            <th style="width:40px;">#</th>
+            <th>Description</th>
+            <th style="width:60px; text-align:center;">Qté</th>
+            <th style="width:90px; text-align:right;">Prix unitaire</th>
+            <th style="width:90px; text-align:right;">Total</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in order.items %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ item.product.name if item.product else 'Article' }}</td>
+            <td style="text-align:center;">{{ item.quantity }}</td>
+            <td style="text-align:right;">{{ "{:,.0f}".format(item.unit_price|float).replace(',', ' ') }} FCFA</td>
+            <td style="text-align:right;">{{ "{:,.0f}".format(item.total|float).replace(',', ' ') }} FCFA</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Totals -->
+{% set subtotal = order.items|sum(attribute='total') %}
+{% set discount_amount = (subtotal|float * order.discount_rate|float / 100) if order.discount_rate and order.discount_rate|float > 0 else 0 %}
+{% set total_after_discount = subtotal|float - discount_amount %}
+
+<div class="totals">
+    <table>
+        <tr>
+            <td>Sous-total</td>
+            <td>{{ "{:,.0f}".format(subtotal|float).replace(',', ' ') }} FCFA</td>
+        </tr>
+        {% if discount_amount > 0 %}
+        <tr class="discount-line">
+            <td>Remise ({{ order.discount_rate }}%)</td>
+            <td>-{{ "{:,.0f}".format(discount_amount).replace(',', ' ') }} FCFA</td>
+        </tr>
+        {% if order.discount_motif %}
+        <tr class="discount-line">
+            <td colspan="2" style="font-size:7.5pt; color:#937C33;">Motif: {{ order.discount_motif }}</td>
+        </tr>
+        {% endif %}
+        {% endif %}
+        <tr class="total-line">
+            <td>Total {{ doc_type }}</td>
+            <td>{{ "{:,.0f}".format(order.total|float).replace(',', ' ') }} FCFA</td>
+        </tr>
+    </table>
+</div>
+
+<!-- Payment Terms -->
+{% if doc_type == 'DEVIS' or doc_type == 'FACTURE' %}
+<div style="margin-top:20px; padding:10px; background:#f9fafb; border-left:3px solid #937C33; font-size:8pt; color:#4b5563;">
+    <strong>Conditions de paiement :</strong><br>
+    Paiement à réception de facture. Virement bancaire ou espèces acceptés.
+    {% if company and company.bank_details %}
+    <br><br><strong>Coordonnées bancaires :</strong><br>
+    {{ company.bank_details }}
+    {% endif %}
+</div>
+
+<!-- Signatures -->
+<div class="signatures">
+    <div class="signature-box">
+        <div class="line">Signature du client</div>
+        <div class="title">Cachet & signature précédés de la mention « Bon pour accord »</div>
+    </div>
+    <div class="signature-box">
+        <div class="line">{{ order.created_by.full_name if order.created_by else 'KAVALI' }}</div>
+        <div class="title">Responsable commercial</div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

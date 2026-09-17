@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}KAVALI ERP — Erreur interne{% endblock %}
+
+{% block content %}
+<div style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:60vh; text-align:center; padding:2rem;">
+    <div style="font-size:48px; margin-bottom:1rem;">⚠️</div>
+    <h1 style="font-size:2rem; font-weight:700; color:var(--kavali-vert); margin-bottom:0.5rem;">500</h1>
+    <h2 style="font-size:1.2rem; font-weight:500; color:var(--muted-foreground); margin-bottom:1rem;">Erreur interne du serveur</h2>
+    <p style="color:var(--muted-foreground); margin-bottom:2rem; max-width:400px;">
+        Un problème inattendu est survenu. Notre équipe technique a été notifiée.
+        Veuillez réessayer plus tard.
+    </p>
+    <a href="{{ url_for('dashboard.index') }}" class="btn btn-primary">
+        Retour au tableau de bord
+    </a>
+</div>
+{% endblock %}

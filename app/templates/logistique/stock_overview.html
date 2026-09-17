@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}KAVALI ERP — Stock{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="crumb">Tableau de bord</a>
+<span class="sep">/</span>
+<span class="current">Stock</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Gestion des stocks</h1>
+        <p class="text-muted">Suivi des niveaux de stock et alertes</p>
+    </div>
+</div>
+
+<!-- Stats cards -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:1.5rem;">
+    <div class="card" style="padding:1.25rem;">
+        <div class="stat-label" style="font-size:0.85rem;color:var(--muted-foreground);">Produits actifs</div>
+        <div class="stat-value" style="font-size:1.8rem;font-weight:700;color:var(--kavali-vert);">{{ total_products }}</div>
+    </div>
+    <div class="card" style="padding:1.25rem;">
+        <div class="stat-label" style="font-size:0.85rem;color:var(--muted-foreground);">Valeur du stock</div>
+        <div class="stat-value" style="font-size:1.8rem;font-weight:700;color:var(--kavali-dore);">{{ format_currency(total_stock_value) }}</div>
+    </div>
+    <div class="card" style="padding:1.25rem;{% if low_stock_count > 0 %}border-color:#EF4444;{% endif %}">
+        <div class="stat-label" style="font-size:0.85rem;color:var(--muted-foreground);">Alertes stock faible</div>
+        <div class="stat-value" style="font-size:1.8rem;font-weight:700;{% if low_stock_count > 0 %}color:#EF4444;{% else %}color:var(--kavali-vert);{% endif %}">{{ low_stock_count }}</div>
+    </div>
+</div>
+
+<!-- Low stock alerts -->
+{% if low_stock %}
+<div class="card" style="margin-bottom:1.5rem;border-color:#FCA5A5;background:#FEF2F2;">
+    <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem;">
+        <span style="font-size:1.2rem;">⚠️</span>
+        <strong style="color:#DC2626;">Produits en dessous du seuil minimum</strong>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:0.5rem;">
+        {% for p in low_stock %}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem;background:#fff;border-radius:0.375rem;border:1px solid #FECACA;">
+            <div>
+                <span style="font-weight:600;">{{ p.name }}</span>
+                <span style="font-size:0.8rem;color:var(--muted-foreground);margin-left:0.5rem;">{{ p.reference }}</span>
+            </div>
+            <div style="text-align:right;">
+                <span style="color:#DC2626;font-weight:700;">{{ p.stock_qty }}</span>
+                <span style="color:var(--muted-foreground);font-size:0.8rem;"> / {{ p.stock_min }} {{ p.unit or 'unité' }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Search -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <form method="GET" action="{{ url_for('logistique.stock_overview') }}" class="search-form">
+        <div class="form-row" style="display:flex;gap:1rem;align-items:end;">
+            <div class="form-group" style="flex:1;">
+                <input type="text" name="q" class="form-input" placeholder="Rechercher un produit (nom, réf, catégorie)..." value="{{ q }}">
+            </div>
+            <button type="submit" class="btn btn-primary">Rechercher</button>
+            {% if q %}
+            <a href="{{ url_for('logistique.stock_overview') }}" class="btn btn-ghost">Effacer</a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Stock Table -->
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Réf.</th>
+                <th>Nom</th>
+                <th>Catégorie</th>
+                <th>Unité</th>
+                <th>Prix unitaire</th>
+                <th>Stock actuel</th>
+                <th>Seuil min</th>
+                <th>Statut</th>
+                <th>Ajuster</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in products.items %}
+            <tr>
+                <td><code>{{ p.reference }}</code></td>
+                <td style="font-weight:600;">{{ p.name }}</td>
+                <td>{{ p.category or '—' }}</td>
+                <td>{{ p.unit or 'unité' }}</td>
+                <td style="font-weight:500;">{{ format_currency(p.price) }}</td>
+                <td>
+                    {% if p.stock_qty is not none and p.stock_min is not none and p.stock_qty|float < p.stock_min|float %}
+                    <span style="color:#EF4444;font-weight:700;">{{ p.stock_qty }}</span>
+                    {% else %}
+                    <span style="font-weight:500;">{{ p.stock_qty }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ p.stock_min }}</td>
+                <td>
+                    {% if p.is_active %}
+                    <span class="badge badge-success">Actif</span>
+                    {% else %}
+                    <span class="badge badge-destructive">Inactif</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div style="display:flex;gap:0.25rem;align-items:center;">
+                        <form method="POST" action="{{ url_for('logistique.stock_adjust') }}" style="display:inline-flex;align-items:center;gap:0.25rem;">
+                            <input type="hidden" name="product_id" value="{{ p.id }}">
+                            <input type="hidden" name="operation" value="add">
+                            <input type="number" name="quantity" class="form-input" style="width:60px;padding:0.25rem;font-size:0.8rem;" min="0.01" step="0.01" placeholder="Qty" required>
+                            <button type="submit" class="btn btn-sm btn-success" title="Ajouter au stock">+</button>
+                        </form>
+                        <form method="POST" action="{{ url_for('logistique.stock_adjust') }}" style="display:inline-flex;align-items:center;gap:0.25rem;">
+                            <input type="hidden" name="product_id" value="{{ p.id }}">
+                            <input type="hidden" name="operation" value="subtract">
+                            <input type="number" name="quantity" class="form-input" style="width:60px;padding:0.25rem;font-size:0.8rem;" min="0.01" step="0.01" placeholder="Qty" required>
+                            <button type="submit" class="btn btn-sm btn-danger" title="Retirer du stock">−</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="9" style="text-align:center;padding:2.5rem;color:var(--muted-foreground);">
+                    {% if q %}
+                    Aucun produit trouvé pour "{{ q }}".
+                    {% else %}
+                    Aucun produit en stock.
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+{% if products.pages > 1 %}
+<div class="pagination" style="display:flex;justify-content:center;gap:0.5rem;margin-top:1.5rem;">
+    {% if products.has_prev %}
+    <a href="{{ url_for('logistique.stock_overview', page=products.prev_num, q=q) }}" class="btn btn-sm btn-ghost">&laquo; Précédent</a>
+    {% endif %}
+    {% for p in products.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+        {% if p %}
+        <a href="{{ url_for('logistique.stock_overview', page=p, q=q) }}" class="btn btn-sm {% if p == products.page %}btn-primary{% else %}btn-ghost{% endif %}">{{ p }}</a>
+        {% else %}
+        <span class="btn btn-sm btn-ghost disabled">...</span>
+        {% endif %}
+    {% endfor %}
+    {% if products.has_next %}
+    <a href="{{ url_for('logistique.stock_overview', page=products.next_num, q=q) }}" class="btn btn-sm btn-ghost">Suivant &raquo;</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

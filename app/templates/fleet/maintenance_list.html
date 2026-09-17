@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}KAVALI ERP — Maintenance{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="crumb">Tableau de bord</a>
+<span class="sep">/</span>
+<a href="{{ url_for('fleet.vehicles_list') }}" class="crumb">Flotte</a>
+<span class="sep">/</span>
+<span class="current">Maintenance</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Maintenance</h1>
+        <p class="text-muted">Suivi des entretiens et réparations</p>
+    </div>
+    <a href="{{ url_for('fleet.maintenance_new') }}" class="btn btn-primary">+ Nouvelle maintenance</a>
+</div>
+
+<!-- Search & Filter -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <form method="GET" action="{{ url_for('fleet.maintenance_list') }}" class="search-form">
+        <div class="form-row" style="display:flex;gap:1rem;align-items:end;flex-wrap:wrap;">
+            <div class="form-group" style="flex:1;min-width:200px;">
+                <input type="text" name="q" class="form-input" placeholder="Rechercher une immatriculation..." value="{{ q }}">
+            </div>
+            <div class="form-group" style="min-width:150px;">
+                <select name="vehicle_id" class="form-input">
+                    <option value="">Tous les véhicules</option>
+                    {% for v in vehicles %}
+                    <option value="{{ v.id }}" {% if vehicle_id == v.id %}selected{% endif %}>{{ v.immatriculation }} — {{ v.brand }} {{ v.model }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group" style="min-width:150px;">
+                <select name="status" class="form-input">
+                    <option value="">Tous les statuts</option>
+                    {% for st in maintenance_statuses %}
+                    <option value="{{ st }}" {% if status == st %}selected{% endif %}>{{ st|capitalize }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Filtrer</button>
+            {% if q or vehicle_id or status %}
+            <a href="{{ url_for('fleet.maintenance_list') }}" class="btn btn-ghost">Effacer</a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Maintenance Table -->
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Véhicule</th>
+                <th>Type</th>
+                <th>Description</th>
+                <th>Coût</th>
+                <th>Prestataire</th>
+                <th>Statut</th>
+                <th>Prochaine échéance</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in maintenance_records.items %}
+            <tr>
+                <td>{{ m.date.strftime('%d/%m/%Y') if m.date else '—' }}</td>
+                <td><a href="{{ url_for('fleet.vehicle_detail', id=m.vehicle_id) }}" class="cell-link" style="font-weight:600;">{{ m.vehicle.immatriculation if m.vehicle else '—' }}</a></td>
+                <td><span style="font-weight:600;">{{ m.type or '—' }}</span></td>
+                <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ m.description or '—' }}</td>
+                <td style="font-weight:600;color:var(--kavali-dore);">{{ format_currency(m.cost) if m.cost else '—' }}</td>
+                <td>{{ m.provider or '—' }}</td>
+                <td>{{ badge(m.status)|safe }}</td>
+                <td>
+                    {% if m.next_due_date %}
+                    {{ m.next_due_date.strftime('%d/%m/%Y') }}
+                    {% elif m.next_due_km > 0 %}
+                    {{ m.next_due_km }} km
+                    {% else %}
+                    —
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="8" style="text-align:center;padding:2.5rem;color:var(--muted-foreground);">
+                    {% if q or vehicle_id or status %}
+                    Aucun enregistrement trouvé.
+                    {% else %}
+                    Aucune maintenance enregistrée. <a href="{{ url_for('fleet.maintenance_new') }}">Ajouter</a>.
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+{% if maintenance_records.pages > 1 %}
+<div class="pagination" style="display:flex;justify-content:center;gap:0.5rem;margin-top:1.5rem;">
+    {% if maintenance_records.has_prev %}
+    <a href="{{ url_for('fleet.maintenance_list', page=maintenance_records.prev_num, q=q, vehicle_id=vehicle_id, status=status) }}" class="btn btn-sm btn-ghost">&laquo; Précédent</a>
+    {% endif %}
+    {% for p in maintenance_records.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+        {% if p %}
+        <a href="{{ url_for('fleet.maintenance_list', page=p, q=q, vehicle_id=vehicle_id, status=status) }}" class="btn btn-sm {% if p == maintenance_records.page %}btn-primary{% else %}btn-ghost{% endif %}">{{ p }}</a>
+        {% else %}
+        <span class="btn btn-sm btn-ghost disabled">...</span>
+        {% endif %}
+    {% endfor %}
+    {% if maintenance_records.has_next %}
+    <a href="{{ url_for('fleet.maintenance_list', page=maintenance_records.next_num, q=q, vehicle_id=vehicle_id, status=status) }}" class="btn btn-sm btn-ghost">Suivant &raquo;</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

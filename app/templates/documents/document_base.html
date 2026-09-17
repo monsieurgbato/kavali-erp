@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ doc_type }} — {{ company.name if company else 'KAVALI' }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        @page {
+            size: A4;
+            margin: 15mm 15mm 25mm 15mm;
+            @bottom-center {
+                content: "{{ company.name if company else 'KAVALI' }} — Page " counter(page) " / " counter(pages);
+                font-size: 8pt;
+                color: #666;
+                font-family: 'Inter', sans-serif;
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 9.5pt;
+            line-height: 1.5;
+            color: #1f2937;
+            background: #fff;
+        }
+
+        /* ── Company Header ── */
+        .company-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding-bottom: 12px;
+            border-bottom: 3px solid #0A3809;
+            margin-bottom: 16px;
+        }
+
+        .company-info h1 {
+            font-size: 16pt;
+            font-weight: 800;
+            color: #0A3809;
+            letter-spacing: -0.5px;
+            margin-bottom: 4px;
+        }
+
+        .company-info .legal-form {
+            font-size: 8pt;
+            color: #6b7280;
+            margin-bottom: 6px;
+        }
+
+        .company-details p {
+            font-size: 7.5pt;
+            color: #4b5563;
+            line-height: 1.6;
+        }
+
+        .company-registry {
+            font-size: 7pt;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        .company-registry span {
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        /* ── Title Block ── */
+        .doc-title {
+            text-align: center;
+            margin: 20px 0 16px;
+        }
+
+        .doc-title h2 {
+            font-size: 20pt;
+            font-weight: 800;
+            color: #0A3809;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .doc-title .doc-ref {
+            font-size: 9pt;
+            color: #4b5563;
+            margin-top: 2px;
+        }
+
+        /* ── Info Sections ── */
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .info-block {
+            flex: 1;
+        }
+
+        .info-block h3 {
+            font-size: 9pt;
+            font-weight: 600;
+            color: #0A3809;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-block p {
+            font-size: 8.5pt;
+            color: #374151;
+            line-height: 1.5;
+        }
+
+        .info-block .label {
+            color: #6b7280;
+            font-size: 7.5pt;
+            font-weight: 500;
+        }
+
+        /* ── Table ── */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+        }
+
+        table thead th {
+            background: #0A3809;
+            color: #fff;
+            font-size: 8pt;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 8px 6px;
+            text-align: left;
+        }
+
+        table thead th:last-child {
+            text-align: right;
+        }
+
+        table tbody td {
+            padding: 6px;
+            font-size: 8.5pt;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        table tbody td:last-child {
+            text-align: right;
+        }
+
+        table tbody tr:nth-child(even) {
+            background: #f9fafb;
+        }
+
+        /* ── Totals ── */
+        .totals {
+            margin-left: auto;
+            width: 240px;
+            margin-top: 8px;
+        }
+
+        .totals table {
+            margin: 0;
+        }
+
+        .totals td {
+            padding: 4px 6px;
+            font-size: 8.5pt;
+            border: none;
+        }
+
+        .totals td:last-child {
+            text-align: right;
+            font-weight: 600;
+        }
+
+        .totals .total-line td {
+            border-top: 2px solid #0A3809;
+            font-size: 10pt;
+            font-weight: 700;
+            color: #0A3809;
+            padding-top: 6px;
+        }
+
+        .totals .discount-line td {
+            color: #937C33;
+        }
+
+        /* ── Footer / Terms ── */
+        .doc-footer {
+            margin-top: 30px;
+            padding-top: 12px;
+            border-top: 1px solid #e5e7eb;
+            font-size: 7.5pt;
+            color: #6b7280;
+            text-align: center;
+        }
+
+        .doc-footer p {
+            margin-bottom: 2px;
+        }
+
+        /* ── Signature ── */
+        .signatures {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+
+        .signature-box {
+            text-align: center;
+            width: 45%;
+        }
+
+        .signature-box .line {
+            border-top: 1px solid #374151;
+            margin-top: 36px;
+            padding-top: 6px;
+            font-size: 8pt;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .signature-box .title {
+            font-size: 7pt;
+            color: #6b7280;
+            margin-top: 2px;
+        }
+
+        /* ── Accent Colors ── */
+        .text-dore {
+            color: #937C33;
+        }
+
+        .text-vert {
+            color: #0A3809;
+        }
+
+        .bg-dore {
+            background: #937C33;
+        }
+
+        /* ── Print Optimizations ── */
+        @media print {
+            body {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .no-print {
+                display: none;
+            }
+            @page {
+                margin: 12mm 12mm 22mm 12mm;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Company Header -->
+<div class="company-header">
+    <div class="company-info">
+        <h1>{{ company.name if company else 'KAVALI' }}</h1>
+        {% if company and company.legal_form %}
+        <div class="legal-form">{{ company.legal_form }}</div>
+        {% endif %}
+        <div class="company-details">
+            {% if company and company.address %}<p>{{ company.address }}</p>{% endif %}
+            {% if company and company.phone %}<p>📞 {{ company.phone }}</p>{% endif %}
+            {% if company and company.email %}<p>✉️ {{ company.email }}</p>{% endif %}
+        </div>
+        <div class="company-registry">
+            {% if company and company.rccm %}<span>RCCM: {{ company.rccm }}</span>{% endif %}
+            {% if company and company.contribuable %}<span>IFU: {{ company.contribuable }}</span>{% endif %}
+            {% if company and company.cnps %}<span>CNPS: {{ company.cnps }}</span>{% endif %}
+        </div>
+    </div>
+    <div style="text-align:right;">
+        {% if company and company.logo_path %}
+        <img src="{{ company.logo_path }}" alt="Logo" style="max-height:60px; max-width:140px;">
+        {% endif %}
+    </div>
+</div>
+
+<!-- Document Title -->
+<div class="doc-title">
+    <h2>{% block document_type %}{{ doc_type }}{% endblock %}</h2>
+    {% if order and order.reference %}
+    <div class="doc-ref">N° {{ order.reference }}</div>
+    {% endif %}
+</div>
+
+<!-- Content -->
+{% block content %}{% endblock %}
+
+<!-- Footer -->
+<div class="doc-footer">
+    <p>{{ company.name if company else 'KAVALI' }} — {{ company.address if company and company.address else 'Abidjan, Côte d\'Ivoire' }}</p>
+    <p>{% if company and company.phone %}Tel: {{ company.phone }} — {% endif %}{% if company and company.email %}{{ company.email }}{% endif %}</p>
+    <p>Document généré le {{ now.strftime('%d/%m/%Y à %H:%M') if now else '' }}</p>
+</div>
+
+</body>
+</html>

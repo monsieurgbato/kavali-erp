@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+*.swp
+*.swo
+.env
+*.tar.gz
+*.gz
+*.log
+.DS_Store
+migrations/versions/
+__pycache__/
+app/__pycache__/
+app/*/__pycache__/
+app/*/templates/__pycache__/

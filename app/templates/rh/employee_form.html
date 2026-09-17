@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}KAVALI ERP — {{ 'Modifier' if employee else 'Nouvel' }} Employé{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="crumb">Tableau de bord</a>
+<span class="sep">/</span>
+<a href="{{ url_for('rh.employees_list') }}" class="crumb">Employés</a>
+<span class="sep">/</span>
+<span class="current">{{ 'Modifier' if employee else 'Nouvel employé' }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;">
+    <div>
+        <h1>{{ 'Modifier' if employee else 'Nouvel' }} employé</h1>
+        <p class="text-muted">
+            {% if employee %}
+            Matricule: {{ employee.matricule }}
+            {% else %}
+            Remplissez les informations du nouvel employé
+            {% endif %}
+        </p>
+    </div>
+</div>
+
+<div class="card" style="max-width:960px;">
+    <form method="POST" action="{% if employee %}{{ url_for('rh.employee_update', id=employee.id) }}{% else %}{{ url_for('rh.employee_create') }}{% endif %}" class="form">
+        <!-- Section 1: Identité -->
+        <div class="section-title">🧑 Identité</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+            <div class="form-group">
+                <label class="form-label">Prénom *</label>
+                <input type="text" name="first_name" class="form-input" required
+                       value="{{ employee.first_name if employee else '' }}" placeholder="Prénom">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Nom *</label>
+                <input type="text" name="last_name" class="form-input" required
+                       value="{{ employee.last_name if employee else '' }}" placeholder="Nom">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Date de naissance</label>
+                <input type="date" name="birth_date" class="form-input"
+                       value="{{ employee.birth_date.strftime('%Y-%m-%d') if employee and employee.birth_date else '' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Lieu de naissance</label>
+                <input type="text" name="birth_place" class="form-input"
+                       value="{{ employee.birth_place if employee else '' }}" placeholder="Ville, pays">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" name="email" class="form-input"
+                       value="{{ employee.email if employee else '' }}" placeholder="email@exemple.com">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Téléphone</label>
+                <input type="text" name="phone" class="form-input"
+                       value="{{ employee.phone if employee else '' }}" placeholder="+225 00 00 00 00">
+            </div>
+        </div>
+
+        <!-- Section 2: Contrat -->
+        <div class="section-title" style="margin-top:2rem;">📋 Contrat</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5rem;">
+            <div class="form-group">
+                <label class="form-label">Poste</label>
+                <input type="text" name="position" class="form-input"
+                       value="{{ employee.position if employee else '' }}" placeholder="Intitulé du poste">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Service</label>
+                <select name="service" class="form-select">
+                    <option value="">Sélectionner...</option>
+                    {% for s in services %}
+                    <option value="{{ s }}" {% if employee and employee.service == s %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Catégorie</label>
+                <input type="text" name="category" class="form-input"
+                       value="{{ employee.category if employee else '' }}" placeholder="Catégorie professionnelle">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Échelon</label>
+                <input type="text" name="echelon" class="form-input"
+                       value="{{ employee.echelon if employee else '' }}" placeholder="Échelon">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Salaire de base</label>
+                <input type="number" name="salary_base" class="form-input" step="0.01" min="0"
+                       value="{{ employee.salary_base if employee else '' }}" placeholder="0">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Type de contrat</label>
+                <select name="contract_type" class="form-select">
+                    {% for ct in contract_types %}
+                    <option value="{{ ct }}" {% if employee and employee.contract_type == ct %}selected{% endif %}>{{ ct|upper }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Date d'embauche</label>
+                <input type="date" name="hire_date" class="form-input"
+                       value="{{ employee.hire_date.strftime('%Y-%m-%d') if employee and employee.hire_date else '' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Fin de contrat</label>
+                <input type="date" name="contract_end" class="form-input"
+                       value="{{ employee.contract_end.strftime('%Y-%m-%d') if employee and employee.contract_end else '' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Statut</label>
+                <select name="status" class="form-select">
+                    {% for st in statuses %}
+                    <option value="{{ st }}" {% if employee and employee.status == st %}selected{% endif %}>{{ st|capitalize }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <!-- Section 3: CNPS & Banque -->
+        <div class="section-title" style="margin-top:2rem;">🏦 CNPS & Banque</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+            <div class="form-group">
+                <label class="form-label">N° CNPS</label>
+                <input type="text" name="cnps_number" class="form-input"
+                       value="{{ employee.cnps_number if employee else '' }}" placeholder="Numéro CNPS">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Compte bancaire</label>
+                <input type="text" name="bank_account" class="form-input"
+                       value="{{ employee.bank_account if employee else '' }}" placeholder="N° de compte">
+            </div>
+        </div>
+
+        <!-- Section 4: Coordonnées -->
+        <div class="section-title" style="margin-top:2rem;">📍 Coordonnées</div>
+        <div class="form-group">
+            <label class="form-label">Adresse</label>
+            <textarea name="address" class="form-textarea" rows="2" placeholder="Adresse complète">{{ employee.address if employee else '' }}</textarea>
+        </div>
+
+        <!-- Section 5: Urgence -->
+        <div class="section-title" style="margin-top:2rem;">🚨 Urgence</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+            <div class="form-group">
+                <label class="form-label">Contact urgence</label>
+                <input type="text" name="emergency_contact" class="form-input"
+                       value="{{ employee.emergency_contact if employee else '' }}" placeholder="Nom du contact">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Téléphone urgence</label>
+                <input type="text" name="emergency_phone" class="form-input"
+                       value="{{ employee.emergency_phone if employee else '' }}" placeholder="+225 00 00 00 00">
+            </div>
+        </div>
+
+        <!-- Section 6: Notes -->
+        <div class="section-title" style="margin-top:2rem;">📝 Notes</div>
+        <div class="form-group">
+            <textarea name="notes" class="form-textarea" rows="3" placeholder="Notes internes...">{{ employee.notes if employee else '' }}</textarea>
+        </div>
+
+        <div class="form-actions" style="display:flex;gap:1rem;margin-top:2rem;">
+            <button type="submit" class="btn btn-primary btn-lg">
+                {% if employee %}Mettre à jour{% else %}Créer l'employé{% endif %}
+            </button>
+            <a href="{% if employee %}{{ url_for('rh.employee_detail', id=employee.id) }}{% else %}{{ url_for('rh.employees_list') }}{% endif %}" class="btn btn-ghost btn-lg">Annuler</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

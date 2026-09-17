@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}KAVALI ERP — {{ role.name }}{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="crumb">Tableau de bord</a>
+<span class="sep">/</span>
+<a href="{{ url_for('admin.roles_list') }}" class="crumb">Rôles</a>
+<span class="sep">/</span>
+<span class="current">{{ role.name }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;">
+    <div>
+        <h1>Rôle : {{ role.name }}</h1>
+        <p class="text-muted">{{ role.description or 'Aucune description' }}</p>
+    </div>
+    <a href="{{ url_for('admin.roles_list') }}" class="btn btn-ghost">← Retour</a>
+</div>
+
+<!-- Infos -->
+<div class="card" style="margin-bottom:1.5rem;max-width:600px;">
+    <div class="card-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            <div>
+                <div style="font-size:0.75rem;color:var(--muted-foreground);">Rôle</div>
+                <div style="font-weight:600;">{{ role.name }}</div>
+            </div>
+            <div>
+                <div style="font-size:0.75rem;color:var(--muted-foreground);">Permissions</div>
+                <div style="font-weight:600;">{{ role.permissions|length }}</div>
+            </div>
+            <div>
+                <div style="font-size:0.75rem;color:var(--muted-foreground);">Utilisateurs rattachés</div>
+                <div style="font-weight:600;">{{ role.users|length if role.users else 0 }}</div>
+            </div>
+            <div>
+                <div style="font-size:0.75rem;color:var(--muted-foreground);">Rôle par défaut</div>
+                <div>
+                    {% if role.is_default %}
+                    <span class="badge badge-success">Oui</span>
+                    {% else %}
+                    <span class="badge badge-default">Non</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Permissions List -->
+<div class="card">
+    <div class="card-header">
+        <div>
+            <div class="card-title">Permissions attribuées</div>
+            <div class="card-description">{{ role.permissions|length }} permission(s) sur {{ permissions|length }} disponibles</div>
+        </div>
+    </div>
+    <div class="card-body" style="padding:0;">
+        <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);background:var(--muted);display:grid;grid-template-columns:80px 1fr 1fr;gap:0.75rem;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted-foreground);">
+            <span>Code</span>
+            <span>Permission</span>
+            <span>Description</span>
+        </div>
+        {% for p in permissions %}
+        {% set has_perm = p in role.permissions %}
+        <div style="padding:0.65rem 1.25rem;border-bottom:1px solid var(--border);display:grid;grid-template-columns:80px 1fr 1fr;gap:0.75rem;align-items:center;{% if has_perm %}background:rgba(34,197,94,0.04);{% endif %}">
+            <div>
+                {% if has_perm %}
+                <span class="badge badge-success">✓ {{ p.ref }}</span>
+                {% else %}
+                <span class="badge badge-default">{{ p.ref }}</span>
+                {% endif %}
+            </div>
+            <div style="font-size:0.875rem;{% if has_perm %}font-weight:500;{% endif %}">
+                {{ p.name }}
+            </div>
+            <div style="font-size:0.8rem;color:var(--muted-foreground);">
+                {{ p.description or '—' }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

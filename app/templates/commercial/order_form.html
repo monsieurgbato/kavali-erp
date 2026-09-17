@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block title %}KAVALI ERP — {{ 'Modifier' if order else 'Nouvelle' }} Commande{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="crumb">Tableau de bord</a>
+<span class="sep">/</span>
+<a href="{{ url_for('commercial.orders_list') }}" class="crumb">Commandes</a>
+<span class="sep">/</span>
+<span class="current">{{ 'Modifier' if order else 'Nouvelle' }}</span>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+    .order-line td { vertical-align: middle; }
+    .order-line .form-input { width: 100%; }
+    .order-line .product-select { min-width: 200px; }
+    .line-total { font-weight: 600; text-align: right; white-space: nowrap; padding-right: 1rem; }
+    #total-display { font-size: 1.25rem; font-weight: 700; color: var(--kavali-vert); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>{{ 'Modifier la commande' if order else 'Nouvelle commande' }}</h1>
+        <p class="text-muted">
+            {% if order %}
+            {{ order.reference }} — {{ order.client.name if order.client else '' }}
+            {% else %}
+            Créer une commande ou un devis
+            {% endif %}
+        </p>
+    </div>
+</div>
+
+<div class="card">
+    <form method="POST" action="{{ url_for('commercial.order_update', id=order.id) if order else url_for('commercial.order_create') }}" class="form" x-data="orderForm()">
+        <!-- Hidden is_devis toggle -->
+        {% if not order %}
+        <div style="margin-bottom:1rem;display:flex;gap:1rem;align-items:center;">
+            <label class="form-label" style="margin:0;">Type :</label>
+            <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+                <input type="radio" name="is_devis" value="0" checked @change="isDevis = false"> Commande
+            </label>
+            <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+                <input type="radio" name="is_devis" value="1" @change="isDevis = true"> Devis
+            </label>
+        </div>
+        {% endif %}
+
+        <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+            <div class="form-group">
+                <label class="form-label">Client *</label>
+                <select name="client_id" class="form-input" required>
+                    <option value="">-- Sélectionner un client --</option>
+                    {% for c in clients %}
+                    <option value="{{ c.id }}" {% if order and order.client_id == c.id %}selected{% endif %}>{{ c.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Type de livraison</label>
+                <select name="delivery_type" class="form-input">
+                    <option value="immediate" {% if order and order.delivery_type == 'immediate' %}selected{% endif %}>Immédiate</option>
+                    <option value="scheduled" {% if order and order.delivery_type == 'scheduled' %}selected{% endif %}>Programmée</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Date de livraison</label>
+                <input type="datetime-local" name="delivery_date" class="form-input" value="{{ order.delivery_date.strftime('%Y-%m-%dT%H:%M') if order and order.delivery_date else '' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Ville de livraison</label>
+                <input type="text" name="delivery_city" class="form-input" value="{{ order.delivery_city if order else '' }}" placeholder="Abidjan">
+            </div>
+            <div class="form-group" style="grid-column:1/-1;">
+                <label class="form-label">Adresse de livraison</label>
+                <textarea name="delivery_address" class="form-input" rows="2" placeholder="Adresse complète">{{ order.delivery_address if order else '' }}</textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Notes client</label>
+                <textarea name="notes_client" class="form-input" rows="2" placeholder="Notes visibles sur le document">{{ order.notes_client if order else '' }}</textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Notes internes</label>
+                <textarea name="notes_internal" class="form-input" rows="2" placeholder="Notes internes">{{ order.notes_internal if order else '' }}</textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Remise (%)</label>
+                <input type="number" name="discount_rate" class="form-input" step="0.01" min="0" max="100" value="{{ order.discount_rate if order else '0' }}" @input="recalcTotal()">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Motif de la remise</label>
+                <input type="text" name="discount_motif" class="form-input" value="{{ order.discount_motif if order else '' }}" placeholder="Fidélité, promo...">
+            </div>
+        </div>
+
+        <!-- Order Items -->
+        <div class="section-title" style="margin-top:2rem;">Articles</div>
+        <div class="table-container">
+            <table id="order-items-table">
+                <thead>
+                    <tr>
+                        <th>Produit</th>
+                        <th style="width:100px;">Quantité</th>
+                        <th style="width:140px;">Prix unitaire</th>
+                        <th style="width:120px;">Total</th>
+                        <th style="width:50px;"></th>
+                    </tr>
+                </thead>
+                <tbody id="order-items-body">
+                    {% if order and order.items %}
+                    {% for item in order.items %}
+                    <tr class="order-line">
+                        <td>
+                            <select name="product_id[]" class="form-input product-select" required>
+                                <option value="">-- Sélectionner --</option>
+                                {% for p in products %}
+                                <option value="{{ p.id }}" {% if item.product_id == p.id %}selected{% endif %} data-price="{{ p.price }}">{{ p.name }} ({{ p.reference }})</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td><input type="number" name="quantity[]" class="form-input" step="0.01" min="0.01" value="{{ item.quantity }}" @input="recalcTotal()"></td>
+                        <td><input type="number" name="unit_price[]" class="form-input unit-price" step="0.01" min="0" value="{{ item.unit_price }}" @input="recalcTotal()"></td>
+                        <td class="line-total">{{ format_currency(item.total) }}</td>
+                        <td><button type="button" class="btn btn-danger btn-sm" @click="$el.closest('tr').remove(); recalcTotal();">✕</button></td>
+                    </tr>
+                    {% endfor %}
+                    {% else %}
+                    <tr class="order-line">
+                        <td>
+                            <select name="product_id[]" class="form-input product-select" required>
+                                <option value="">-- Sélectionner --</option>
+                                {% for p in products %}
+                                <option value="{{ p.id }}" data-price="{{ p.price }}">{{ p.name }} ({{ p.reference }})</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td><input type="number" name="quantity[]" class="form-input" step="0.01" min="0.01" value="1" @input="recalcTotal()"></td>
+                        <td><input type="number" name="unit_price[]" class="form-input unit-price" step="0.01" min="0" @input="recalcTotal()"></td>
+                        <td class="line-total">0 FCFA</td>
+                        <td><button type="button" class="btn btn-danger btn-sm" @click="$el.closest('tr').remove(); recalcTotal();">✕</button></td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1rem;">
+            <button type="button" class="btn btn-ghost" @click="addLine()">+ Ajouter un article</button>
+            <div style="text-align:right;">
+                <span style="color:var(--muted-foreground);">Total : </span>
+                <span id="total-display" x-text="totalFormatted">0 FCFA</span>
+            </div>
+        </div>
+
+        <div class="form-actions" style="display:flex;gap:1rem;margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);">
+            <button type="submit" class="btn btn-primary">{{ 'Mettre à jour' if order else 'Créer la commande' }}</button>
+            <a href="{{ url_for('commercial.orders_list') }}" class="btn btn-ghost">Annuler</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function orderForm() {
+        return {
+            isDevis: false,
+            totalFormatted: '0 FCFA',
+            init() {
+                this.recalcTotal();
+                // Auto-fill price on product select change
+                document.querySelectorAll('.product-select').forEach(sel => {
+                    sel.addEventListener('change', (e) => {
+                        const opt = e.target.selectedOptions[0];
+                        if (opt && opt.dataset.price) {
+                            const row = e.target.closest('tr');
+                            if (row) {
+                                row.querySelector('.unit-price').value = opt.dataset.price;
+                            }
+                        }
+                        this.recalcTotal();
+                    });
+                });
+            },
+            recalcTotal() {
+                let total = 0;
+                document.querySelectorAll('#order-items-body tr').forEach(row => {
+                    const qty = parseFloat(row.querySelector('[name="quantity[]"]')?.value) || 0;
+                    const price = parseFloat(row.querySelector('[name="unit_price[]"]')?.value) || 0;
+                    const lineTotal = qty * price;
+                    row.querySelector('.line-total').textContent = lineTotal.toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' FCFA';
+                    total += lineTotal;
+                });
+                const discount = parseFloat(document.querySelector('[name="discount_rate"]')?.value) || 0;
+                if (discount > 0) {
+                    total = total * (1 - discount / 100);
+                }
+                this.totalFormatted = total.toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' FCFA';
+            },
+            addLine() {
+                const tbody = document.getElementById('order-items-body');
+                const row = document.createElement('tr');
+                row.className = 'order-line';
+                const productsOptions = `{% for p in products %}<option value="{{ p.id }}" data-price="{{ p.price }}">{{ p.name }} ({{ p.reference }})</option>{% endfor %}`;
+                row.innerHTML = `
+                    <td>
+                        <select name="product_id[]" class="form-input product-select" required>
+                            <option value="">-- Sélectionner --</option>
+                            ${productsOptions}
+                        </select>
+                    </td>
+                    <td><input type="number" name="quantity[]" class="form-input" step="0.01" min="0.01" value="1" @input="recalcTotal()"></td>
+                    <td><input type="number" name="unit_price[]" class="form-input unit-price" step="0.01" min="0" @input="recalcTotal()"></td>
+                    <td class="line-total">0 FCFA</td>
+                    <td><button type="button" class="btn btn-danger btn-sm" @click="$el.closest('tr').remove(); recalcTotal();">✕</button></td>
+                `;
+                tbody.appendChild(row);
+                // Attach product select change
+                const sel = row.querySelector('.product-select');
+                sel.addEventListener('change', (e) => {
+                    const opt = e.target.selectedOptions[0];
+                    if (opt && opt.dataset.price) {
+                        row.querySelector('.unit-price').value = opt.dataset.price;
+                    }
+                    this.recalcTotal();
+                });
+                this.recalcTotal();
+            }
+        };
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}KAVALI ERP — Clients{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="crumb">Tableau de bord</a>
+<span class="sep">/</span>
+<span class="current">Clients</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Clients</h1>
+        <p class="text-muted">Gestion des clients actifs</p>
+    </div>
+    <a href="{{ url_for('commercial.client_new') }}" class="btn btn-primary">+ Nouveau client</a>
+</div>
+
+<!-- Search -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <form method="GET" action="{{ url_for('commercial.clients_list') }}" class="search-form">
+        <div class="form-row" style="display:flex;gap:1rem;align-items:end;">
+            <div class="form-group" style="flex:1;">
+                <input type="text" name="q" class="form-input" placeholder="Rechercher un client..." value="{{ q }}">
+            </div>
+            <button type="submit" class="btn btn-primary">Rechercher</button>
+            {% if q %}
+            <a href="{{ url_for('commercial.clients_list') }}" class="btn btn-ghost">Effacer</a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Clients Table -->
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Contact</th>
+                <th>Téléphone</th>
+                <th>Email</th>
+                <th>Zone</th>
+                <th>Note</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in clients.items %}
+            <tr>
+                <td>
+                    <a href="{{ url_for('commercial.client_detail', id=c.id) }}" class="cell-link" style="font-weight:600;">
+                        {{ c.name }}
+                    </a>
+                </td>
+                <td>{{ c.contact or '—' }}</td>
+                <td>{{ c.phone or '—' }}</td>
+                <td>{{ c.email or '—' }}</td>
+                <td>{{ c.zone or '—' }}</td>
+                <td>
+                    <span style="display:inline-block;width:28px;height:28px;border-radius:50%;background:{{ note_color(c.note) }};color:#fff;text-align:center;line-height:28px;font-weight:700;font-size:0.8rem;">
+                        {{ c.note or 'C' }}
+                    </span>
+                </td>
+                <td>
+                    <div class="action-btns">
+                        <a href="{{ url_for('commercial.client_detail', id=c.id) }}" class="btn btn-sm btn-ghost">Voir</a>
+                        <a href="{{ url_for('commercial.client_edit', id=c.id) }}" class="btn btn-sm btn-ghost">Modifier</a>
+                        <form method="POST" action="{{ url_for('commercial.client_delete', id=c.id) }}" style="display:inline;">
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Confirmer le déplacement vers les prospects ?')">Archiver</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" style="text-align:center;padding:2.5rem;color:var(--muted-foreground);">
+                    {% if q %}
+                    Aucun client trouvé pour "{{ q }}".
+                    {% else %}
+                    Aucun client enregistré. <a href="{{ url_for('commercial.client_new') }}">Créer le premier client</a>.
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+{% if clients.pages > 1 %}
+<div class="pagination" style="display:flex;justify-content:center;gap:0.5rem;margin-top:1.5rem;">
+    {% if clients.has_prev %}
+    <a href="{{ url_for('commercial.clients_list', page=clients.prev_num, q=q) }}" class="btn btn-sm btn-ghost">&laquo; Précédent</a>
+    {% endif %}
+    {% for p in clients.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+        {% if p %}
+        <a href="{{ url_for('commercial.clients_list', page=p, q=q) }}" class="btn btn-sm {% if p == clients.page %}btn-primary{% else %}btn-ghost{% endif %}">{{ p }}</a>
+        {% else %}
+        <span class="btn btn-sm btn-ghost disabled">...</span>
+        {% endif %}
+    {% endfor %}
+    {% if clients.has_next %}
+    <a href="{{ url_for('commercial.clients_list', page=clients.next_num, q=q) }}" class="btn btn-sm btn-ghost">Suivant &raquo;</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

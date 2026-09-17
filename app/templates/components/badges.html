@@ -1,0 +1,46 @@
+{# Badges de statut / délai pour KAVALI ERP #}
+
+{% macro badge_valide(text) %}
+<span style="display: inline-flex; align-items: center; gap: 0.3rem;
+             background: #d4edda; color: #155724;
+             padding: 0.25rem 0.7rem; border-radius: 20px;
+             font-size: 0.75rem; font-weight: 600;">
+    🟢 {{ text|default('Validé') }}
+</span>
+{% endmacro %}
+
+{% macro badge_attente(text) %}
+<span style="display: inline-flex; align-items: center; gap: 0.3rem;
+             background: #fff3cd; color: #856404;
+             padding: 0.25rem 0.7rem; border-radius: 20px;
+             font-size: 0.75rem; font-weight: 600;">
+    🟠 {{ text|default('En attente <48h') }}
+</span>
+{% endmacro %}
+
+{% macro badge_urgent(text) %}
+<span style="display: inline-flex; align-items: center; gap: 0.3rem;
+             background: #f8d7da; color: #721c24;
+             padding: 0.25rem 0.7rem; border-radius: 20px;
+             font-size: 0.75rem; font-weight: 600;">
+    🔴 {{ text|default('Urgent 48-72h') }}
+</span>
+{% endmacro %}
+
+{% macro badge_custom(label, color_bg, color_text, icon) %}
+<span style="display: inline-flex; align-items: center; gap: 0.3rem;
+             background: {{ color_bg|default('#e5e7eb') }}; color: {{ color_text|default('#374151') }};
+             padding: 0.25rem 0.7rem; border-radius: 20px;
+             font-size: 0.75rem; font-weight: 600;">
+    {{ icon|default('') }} {{ label }}
+</span>
+{% endmacro %}
+
+{# Stats card shorthand — utilisée par stats_card.html #}
+{% macro stat_badge(type) %}
+    {% if type == 'valide' %}{{ badge_valide() }}
+    {% elif type == 'attente' %}{{ badge_attente() }}
+    {% elif type == 'urgent' %}{{ badge_urgent() }}
+    {% else %}{{ badge_custom(type, '#e5e7eb', '#374151', '🏷️') }}
+    {% endif %}
+{% endmacro %}

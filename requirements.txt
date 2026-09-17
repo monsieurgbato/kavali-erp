@@ -1,0 +1,12 @@
+flask==3.1.*
+flask-login==0.6.*
+flask-sqlalchemy==3.1.*
+flask-migrate==4.0.*
+sqlalchemy==2.0.*
+psycopg2-binary==2.9.*
+weasyprint==60.2
+pydyf<0.9
+Flask-Mail==0.9.1
+email-validator==2.*
+python-dotenv==1.*
+gunicorn==23.*

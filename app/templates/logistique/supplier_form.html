@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}KAVALI ERP — {{ 'Modifier' if supplier else 'Nouveau' }} Fournisseur{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="crumb">Tableau de bord</a>
+<span class="sep">/</span>
+<a href="{{ url_for('logistique.stock_overview') }}" class="crumb">Stock</a>
+<span class="sep">/</span>
+<a href="{{ url_for('logistique.suppliers_list') }}" class="crumb">Fournisseurs</a>
+<span class="sep">/</span>
+<span class="current">{{ 'Modifier' if supplier else 'Nouveau' }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>{{ 'Modifier le fournisseur' if supplier else 'Nouveau fournisseur' }}</h1>
+        <p class="text-muted">{{ 'Mettre à jour les informations du fournisseur' if supplier else 'Ajouter un nouveau fournisseur' }}</p>
+    </div>
+</div>
+
+<div class="card" style="max-width:800px;">
+    <form method="POST" action="{% if supplier %}{{ url_for('logistique.supplier_update', id=supplier.id) }}{% else %}{{ url_for('logistique.supplier_create') }}{% endif %}" class="form">
+        <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+            <div class="form-group">
+                <label class="form-label">Nom du fournisseur *</label>
+                <input type="text" name="name" class="form-input" required value="{{ supplier.name if supplier else '' }}" placeholder="Nom complet">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Contact</label>
+                <input type="text" name="contact" class="form-input" value="{{ supplier.contact if supplier else '' }}" placeholder="Personne de contact">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Téléphone</label>
+                <input type="text" name="phone" class="form-input" value="{{ supplier.phone if supplier else '' }}" placeholder="+225 00 00 00 00">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" name="email" class="form-input" value="{{ supplier.email if supplier else '' }}" placeholder="fournisseur@example.com">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Type de service</label>
+                <input type="text" name="service_type" class="form-input" value="{{ supplier.service_type if supplier else '' }}" placeholder="Ex: Transport, Maintenance, ...">
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Adresse</label>
+            <textarea name="address" class="form-input" rows="3" placeholder="Adresse complète">{{ supplier.address if supplier else '' }}</textarea>
+        </div>
+        <div class="form-actions" style="display:flex;gap:1rem;margin-top:1.5rem;">
+            <button type="submit" class="btn btn-primary">{{ 'Mettre à jour' if supplier else 'Créer le fournisseur' }}</button>
+            <a href="{{ url_for('logistique.suppliers_list') }}" class="btn btn-ghost">Annuler</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

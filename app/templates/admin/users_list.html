@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}KAVALI ERP — Utilisateurs{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="crumb">Tableau de bord</a>
+<span class="sep">/</span>
+<span class="current">Utilisateurs</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
+    <div>
+        <h1>Utilisateurs</h1>
+        <p class="text-muted">Gestion des accès — {{ total_active }} actif(s)</p>
+    </div>
+    <a href="{{ url_for('admin.user_new') }}" class="btn btn-primary">+ Nouvel utilisateur</a>
+</div>
+
+<!-- Stats cards -->
+<div class="stats-grid" style="margin-bottom:1.5rem;">
+    <div class="stat-card">
+        <div class="stat-header">
+            <span class="stat-label">Actifs</span>
+        </div>
+        <div class="stat-value" style="color:var(--success);">{{ total_active }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-header">
+            <span class="stat-label">Suspendus</span>
+        </div>
+        <div class="stat-value" style="color:var(--warning);">{{ total_suspended }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-header">
+            <span class="stat-label">Désactivés</span>
+        </div>
+        <div class="stat-value" style="color:var(--muted-foreground);">{{ total_inactive }}</div>
+    </div>
+</div>
+
+<!-- Search + Filters -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <form method="GET" action="{{ url_for('admin.users_list') }}" class="search-form">
+        <div style="display:flex;gap:1rem;align-items:end;flex-wrap:wrap;">
+            <div class="form-group" style="flex:2;min-width:200px;margin-bottom:0;">
+                <input type="text" name="q" class="form-input" placeholder="Rechercher un utilisateur..." value="{{ q }}">
+            </div>
+            <div class="form-group" style="flex:1;min-width:160px;margin-bottom:0;">
+                <select name="role" class="form-select">
+                    <option value="">Tous rôles</option>
+                    {% for r in roles %}
+                    <option value="{{ r.id }}" {% if role_filter == r.id|string %}selected{% endif %}>{{ r.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-bottom:0;">Filtrer</button>
+            {% if q or role_filter %}
+            <a href="{{ url_for('admin.users_list') }}" class="btn btn-ghost" style="margin-bottom:0;">Effacer</a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Users Table -->
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Utilisateur</th>
+                <th>Email</th>
+                <th>Rôle</th>
+                <th>Service</th>
+                <th>Statut</th>
+                <th>Dernière connexion</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in users.items %}
+            <tr>
+                <td>
+                    <div style="display:flex;align-items:center;gap:0.5rem;">
+                        <div class="user-avatar" style="width:32px;height:32px;border-radius:50%;background:var(--primary);color:var(--primary-foreground);display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:600;flex-shrink:0;">
+                            {{ (u.full_name or u.username)[0]|upper }}
+                        </div>
+                        <div>
+                            <a href="{{ url_for('admin.user_edit', id=u.id) }}" class="cell-link" style="font-weight:600;">
+                                {{ u.full_name or u.username }}
+                            </a>
+                            <div style="font-size:0.75rem;color:var(--muted-foreground);">@{{ u.username }}</div>
+                        </div>
+                    </div>
+                </td>
+                <td>{{ u.email }}</td>
+                <td>
+                    {% if u.role %}
+                    <span class="badge badge-secondary">{{ u.role.name }}</span>
+                    {% else %}
+                    <span class="badge badge-default">—</span>
+                    {% endif %}
+                </td>
+                <td>{{ u.service or '—' }}</td>
+                <td>
+                    {% if not u.is_active %}
+                    <span class="badge badge-default">Désactivé</span>
+                    {% elif u.is_suspended %}
+                    <span class="badge badge-warning">Suspendu</span>
+                    {% else %}
+                    <span class="badge badge-success">Actif</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if u.last_login %}
+                    <span style="font-size:0.8rem;color:var(--muted-foreground);">{{ u.last_login.strftime('%d/%m/%Y %H:%M') }}</span>
+                    {% else %}
+                    <span style="font-size:0.8rem;color:var(--muted-foreground);">Jamais</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="action-btns" style="display:flex;gap:0.25rem;">
+                        <a href="{{ url_for('admin.user_edit', id=u.id) }}" class="btn btn-sm btn-ghost" title="Modifier">✏️</a>
+                        {% if u.is_active %}
+                        <form method="POST" action="{{ url_for('admin.user_toggle_suspend', id=u.id) }}" style="display:inline;" onsubmit="return confirm('Suspendre {{ u.full_name or u.username }} ?')">
+                            <button type="submit" class="btn btn-sm btn-ghost" title="Suspendre" style="color:var(--warning);">⏸️</button>
+                        </form>
+                        {% else %}
+                        <form method="POST" action="{{ url_for('admin.user_toggle_suspend', id=u.id) }}" style="display:inline;" onsubmit="return confirm('Réactiver {{ u.full_name or u.username }} ?')">
+                            <button type="submit" class="btn btn-sm btn-ghost" title="Réactiver" style="color:var(--success);">▶️</button>
+                        </form>
+                        {% endif %}
+                        <form method="POST" action="{{ url_for('admin.user_reset_password', id=u.id) }}" style="display:inline;" onsubmit="return confirm('Réinitialiser le mot de passe de {{ u.full_name or u.username }} ?')">
+                            <button type="submit" class="btn btn-sm btn-ghost" title="Réinitialiser mot de passe" style="color:var(--secondary);">🔑</button>
+                        </form>
+                        {% if u.is_active %}
+                        <form method="POST" action="{{ url_for('admin.user_delete', id=u.id) }}" style="display:inline;" onsubmit="return confirm('Désactiver définitivement {{ u.full_name or u.username }} ?')">
+                            <button type="submit" class="btn btn-sm btn-ghost" title="Désactiver" style="color:var(--destructive);">🗑️</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" style="text-align:center;padding:2.5rem;color:var(--muted-foreground);">
+                    {% if q or role_filter %}
+                    Aucun utilisateur trouvé pour ces critères.
+                    {% else %}
+                    Aucun utilisateur enregistré. <a href="{{ url_for('admin.user_new') }}">Ajouter le premier utilisateur</a>.
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+{% if users.pages > 1 %}
+<div style="display:flex;justify-content:center;gap:0.5rem;margin-top:1.5rem;">
+    {% if users.has_prev %}
+    <a href="{{ url_for('admin.users_list', page=users.prev_num, q=q, role=role_filter) }}" class="btn btn-sm btn-ghost">&laquo; Précédent</a>
+    {% endif %}
+    {% for p in users.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+        {% if p %}
+        <a href="{{ url_for('admin.users_list', page=p, q=q, role=role_filter) }}" class="btn btn-sm {% if p == users.page %}btn-primary{% else %}btn-ghost{% endif %}">{{ p }}</a>
+        {% else %}
+        <span class="btn btn-sm btn-ghost disabled">...</span>
+        {% endif %}
+    {% endfor %}
+    {% if users.has_next %}
+    <a href="{{ url_for('admin.users_list', page=users.next_num, q=q, role=role_filter) }}" class="btn btn-sm btn-ghost">Suivant &raquo;</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

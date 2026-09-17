@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}KAVALI ERP — Véhicules{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="crumb">Tableau de bord</a>
+<span class="sep">/</span>
+<span class="current">Flotte — Véhicules</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Véhicules</h1>
+        <p class="text-muted">Gestion de la flotte automobile</p>
+    </div>
+    <a href="{{ url_for('fleet.vehicle_new') }}" class="btn btn-primary">+ Nouveau véhicule</a>
+</div>
+
+<!-- Stats & alerts -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:1.5rem;">
+    <div class="card" style="padding:1.25rem;">
+        <div class="stat-label" style="font-size:0.85rem;color:var(--muted-foreground);">Total véhicules</div>
+        <div class="stat-value" style="font-size:1.8rem;font-weight:700;color:var(--kavali-vert);">{{ vehicles.total }}</div>
+    </div>
+    <div class="card" style="padding:1.25rem;{% if expiring_insurance > 0 %}border-color:#EF4444;{% endif %}">
+        <div class="stat-label" style="font-size:0.85rem;color:var(--muted-foreground);">Assurances expirées</div>
+        <div class="stat-value" style="font-size:1.8rem;font-weight:700;{% if expiring_insurance > 0 %}color:#EF4444;{% else %}color:var(--kavali-vert);{% endif %}">{{ expiring_insurance }}</div>
+    </div>
+</div>
+
+<!-- Search & Filter -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <form method="GET" action="{{ url_for('fleet.vehicles_list') }}" class="search-form">
+        <div class="form-row" style="display:flex;gap:1rem;align-items:end;flex-wrap:wrap;">
+            <div class="form-group" style="flex:1;min-width:200px;">
+                <input type="text" name="q" class="form-input" placeholder="Rechercher (immatriculation, marque, modèle)..." value="{{ q }}">
+            </div>
+            <div class="form-group" style="min-width:150px;">
+                <select name="status" class="form-input">
+                    <option value="">Tous les statuts</option>
+                    {% for st in vehicle_statuses %}
+                    <option value="{{ st }}" {% if status == st %}selected{% endif %}>{{ st|replace('_', ' ')|capitalize }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Filtrer</button>
+            {% if q or status %}
+            <a href="{{ url_for('fleet.vehicles_list') }}" class="btn btn-ghost">Effacer</a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Vehicles Table -->
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Immatriculation</th>
+                <th>Marque / Modèle</th>
+                <th>Année</th>
+                <th>Type</th>
+                <th>Carburant</th>
+                <th>Statut</th>
+                <th>Chauffeur</th>
+                <th>Assurance</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for v in vehicles.items %}
+            <tr>
+                <td><a href="{{ url_for('fleet.vehicle_detail', id=v.id) }}" class="cell-link" style="font-weight:600;">{{ v.immatriculation }}</a></td>
+                <td>{{ v.brand or '—' }} {{ v.model or '' }}</td>
+                <td>{{ v.year if v.year > 0 else '—' }}</td>
+                <td>{{ v.type or '—' }}</td>
+                <td>{{ v.fuel_type or '—' }}</td>
+                <td>{{ badge(v.status)|safe }}</td>
+                <td>{{ v.driver.full_name if v.driver else '—' }}</td>
+                <td>
+                    {% if v.insurance_expiry %}
+                        {% if v.insurance_expiry < today %}
+                        <span style="color:#EF4444;font-weight:600;">Expirée</span>
+                        {% else %}
+                        <span style="color:var(--kavali-vert);">{{ v.insurance_expiry.strftime('%d/%m/%Y') }}</span>
+                        {% endif %}
+                    {% else %}
+                    <span class="text-muted">—</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="action-btns">
+                        <a href="{{ url_for('fleet.vehicle_detail', id=v.id) }}" class="btn btn-sm btn-ghost">Voir</a>
+                        <a href="{{ url_for('fleet.vehicle_edit', id=v.id) }}" class="btn btn-sm btn-ghost">Modifier</a>
+                        <form method="POST" action="{{ url_for('fleet.vehicle_delete', id=v.id) }}" style="display:inline;">
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Désactiver ce véhicule ?')">Désactiver</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="9" style="text-align:center;padding:2.5rem;color:var(--muted-foreground);">
+                    {% if q or status %}
+                    Aucun véhicule trouvé.
+                    {% else %}
+                    Aucun véhicule enregistré. <a href="{{ url_for('fleet.vehicle_new') }}">Ajouter un véhicule</a>.
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+{% if vehicles.pages > 1 %}
+<div class="pagination" style="display:flex;justify-content:center;gap:0.5rem;margin-top:1.5rem;">
+    {% if vehicles.has_prev %}
+    <a href="{{ url_for('fleet.vehicles_list', page=vehicles.prev_num, q=q, status=status) }}" class="btn btn-sm btn-ghost">&laquo; Précédent</a>
+    {% endif %}
+    {% for p in vehicles.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+        {% if p %}
+        <a href="{{ url_for('fleet.vehicles_list', page=p, q=q, status=status) }}" class="btn btn-sm {% if p == vehicles.page %}btn-primary{% else %}btn-ghost{% endif %}">{{ p }}</a>
+        {% else %}
+        <span class="btn btn-sm btn-ghost disabled">...</span>
+        {% endif %}
+    {% endfor %}
+    {% if vehicles.has_next %}
+    <a href="{{ url_for('fleet.vehicles_list', page=vehicles.next_num, q=q, status=status) }}" class="btn btn-sm btn-ghost">Suivant &raquo;</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

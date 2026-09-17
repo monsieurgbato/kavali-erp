@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}KAVALI ERP — {{ 'Modifier' if driver else 'Nouveau' }} Chauffeur{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="crumb">Tableau de bord</a>
+<span class="sep">/</span>
+<a href="{{ url_for('fleet.vehicles_list') }}" class="crumb">Flotte</a>
+<span class="sep">/</span>
+<a href="{{ url_for('fleet.drivers_list') }}" class="crumb">Chauffeurs</a>
+<span class="sep">/</span>
+<span class="current">{{ 'Modifier' if driver else 'Nouveau' }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>{{ 'Modifier le chauffeur' if driver else 'Nouveau chauffeur' }}</h1>
+        <p class="text-muted">{{ 'Mettre à jour les informations du conducteur' if driver else 'Ajouter un nouveau conducteur' }}</p>
+    </div>
+</div>
+
+<div class="card" style="max-width:960px;">
+    <form method="POST" action="{% if driver %}{{ url_for('fleet.driver_update', id=driver.id) }}{% else %}{{ url_for('fleet.driver_create') }}{% endif %}" class="form">
+        <!-- Section 1: Identité -->
+        <div class="section-title">🧑 Identité</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+            <div class="form-group">
+                <label class="form-label">Prénom *</label>
+                <input type="text" name="first_name" class="form-input" required
+                       value="{{ driver.first_name if driver else '' }}" placeholder="Prénom">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Nom *</label>
+                <input type="text" name="last_name" class="form-input" required
+                       value="{{ driver.last_name if driver else '' }}" placeholder="Nom">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Téléphone</label>
+                <input type="text" name="phone" class="form-input"
+                       value="{{ driver.phone if driver else '' }}" placeholder="+225 00 00 00 00">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" name="email" class="form-input"
+                       value="{{ driver.email if driver else '' }}" placeholder="email@exemple.com">
+            </div>
+        </div>
+
+        <!-- Section 2: Permis -->
+        <div class="section-title" style="margin-top:2rem;">📄 Permis de conduire</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5rem;">
+            <div class="form-group">
+                <label class="form-label">N° Permis</label>
+                <input type="text" name="license_number" class="form-input"
+                       value="{{ driver.license_number if driver else '' }}" placeholder="Numéro de permis">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Catégorie</label>
+                <select name="license_category" class="form-input">
+                    {% for lc in license_categories %}
+                    <option value="{{ lc }}" {% if driver and driver.license_category == lc %}selected{% endif %}>Permis {{ lc }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Expiration permis</label>
+                <input type="date" name="license_expiry" class="form-input"
+                       value="{{ driver.license_expiry.strftime('%Y-%m-%d') if driver and driver.license_expiry else '' }}">
+            </div>
+        </div>
+
+        <!-- Section 3: Emploi -->
+        <div class="section-title" style="margin-top:2rem;">💼 Emploi</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+            <div class="form-group">
+                <label class="form-label">Date d'embauche</label>
+                <input type="date" name="hire_date" class="form-input"
+                       value="{{ driver.hire_date.strftime('%Y-%m-%d') if driver and driver.hire_date else '' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Statut</label>
+                <select name="status" class="form-input">
+                    {% for st in statuses %}
+                    <option value="{{ st }}" {% if driver and driver.status == st %}selected{% endif %}>{{ st|capitalize }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <!-- Section 4: Coordonnées / Urgence -->
+        <div class="section-title" style="margin-top:2rem;">📍 Adresse & urgence</div>
+        <div class="form-group">
+            <label class="form-label">Adresse</label>
+            <textarea name="address" class="form-input" rows="2" placeholder="Adresse complète">{{ driver.address if driver else '' }}</textarea>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:1rem;">
+            <div class="form-group">
+                <label class="form-label">Contact urgence</label>
+                <input type="text" name="emergency_contact" class="form-input"
+                       value="{{ driver.emergency_contact if driver else '' }}" placeholder="Nom du contact">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Téléphone urgence</label>
+                <input type="text" name="emergency_phone" class="form-input"
+                       value="{{ driver.emergency_phone if driver else '' }}" placeholder="+225 00 00 00 00">
+            </div>
+        </div>
+
+        <!-- Section 5: Notes -->
+        <div class="section-title" style="margin-top:2rem;">📝 Notes</div>
+        <div class="form-group">
+            <textarea name="notes" class="form-input" rows="3" placeholder="Notes internes...">{{ driver.notes if driver else '' }}</textarea>
+        </div>
+
+        <div class="form-actions" style="display:flex;gap:1rem;margin-top:2rem;">
+            <button type="submit" class="btn btn-primary btn-lg">
+                {% if driver %}Mettre à jour{% else %}Créer le chauffeur{% endif %}
+            </button>
+            <a href="{{ url_for('fleet.drivers_list') }}" class="btn btn-ghost btn-lg">Annuler</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

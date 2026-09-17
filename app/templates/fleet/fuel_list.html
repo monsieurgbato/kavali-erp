@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}KAVALI ERP — Carburant{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="crumb">Tableau de bord</a>
+<span class="sep">/</span>
+<a href="{{ url_for('fleet.vehicles_list') }}" class="crumb">Flotte</a>
+<span class="sep">/</span>
+<span class="current">Carburant</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Relevés carburant</h1>
+        <p class="text-muted">Suivi des achats de carburant par véhicule</p>
+    </div>
+    <a href="{{ url_for('fleet.fuel_new') }}" class="btn btn-primary">+ Nouveau relevé</a>
+</div>
+
+<!-- Search & Filter -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <form method="GET" action="{{ url_for('fleet.fuel_list') }}" class="search-form">
+        <div class="form-row" style="display:flex;gap:1rem;align-items:end;flex-wrap:wrap;">
+            <div class="form-group" style="flex:1;min-width:200px;">
+                <input type="text" name="q" class="form-input" placeholder="Rechercher une immatriculation..." value="{{ q }}">
+            </div>
+            <div class="form-group" style="min-width:150px;">
+                <select name="vehicle_id" class="form-input">
+                    <option value="">Tous les véhicules</option>
+                    {% for v in vehicles %}
+                    <option value="{{ v.id }}" {% if vehicle_id == v.id %}selected{% endif %}>{{ v.immatriculation }} — {{ v.brand }} {{ v.model }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Filtrer</button>
+            {% if q or vehicle_id %}
+            <a href="{{ url_for('fleet.fuel_list') }}" class="btn btn-ghost">Effacer</a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Fuel Records Table -->
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Véhicule</th>
+                <th>Litres</th>
+                <th>Prix unitaire</th>
+                <th>Total</th>
+                <th>Compteur</th>
+                <th>Station</th>
+                <th>Notes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for f in fuel_records.items %}
+            <tr>
+                <td>{{ f.date.strftime('%d/%m/%Y') if f.date else '—' }}</td>
+                <td><a href="{{ url_for('fleet.vehicle_detail', id=f.vehicle_id) }}" class="cell-link" style="font-weight:600;">{{ f.vehicle.immatriculation if f.vehicle else '—' }}</a></td>
+                <td style="font-weight:600;">{{ f.liters }} L</td>
+                <td>{{ format_currency(f.unit_price) }}</td>
+                <td style="font-weight:600;color:var(--kavali-dore);">{{ format_currency(f.total_amount) }}</td>
+                <td>{{ f.odometer if f.odometer > 0 else '—' }} km</td>
+                <td>{{ f.station or '—' }}</td>
+                <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ f.notes or '—' }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="8" style="text-align:center;padding:2.5rem;color:var(--muted-foreground);">
+                    {% if q or vehicle_id %}
+                    Aucun relevé trouvé.
+                    {% else %}
+                    Aucun relevé carburant. <a href="{{ url_for('fleet.fuel_new') }}">Ajouter un relevé</a>.
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+{% if fuel_records.pages > 1 %}
+<div class="pagination" style="display:flex;justify-content:center;gap:0.5rem;margin-top:1.5rem;">
+    {% if fuel_records.has_prev %}
+    <a href="{{ url_for('fleet.fuel_list', page=fuel_records.prev_num, q=q, vehicle_id=vehicle_id) }}" class="btn btn-sm btn-ghost">&laquo; Précédent</a>
+    {% endif %}
+    {% for p in fuel_records.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+        {% if p %}
+        <a href="{{ url_for('fleet.fuel_list', page=p, q=q, vehicle_id=vehicle_id) }}" class="btn btn-sm {% if p == fuel_records.page %}btn-primary{% else %}btn-ghost{% endif %}">{{ p }}</a>
+        {% else %}
+        <span class="btn btn-sm btn-ghost disabled">...</span>
+        {% endif %}
+    {% endfor %}
+    {% if fuel_records.has_next %}
+    <a href="{{ url_for('fleet.fuel_list', page=fuel_records.next_num, q=q, vehicle_id=vehicle_id) }}" class="btn btn-sm btn-ghost">Suivant &raquo;</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

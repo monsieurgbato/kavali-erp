@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}KAVALI ERP — {{ 'Modifier' if product else 'Nouveau' }} Produit{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="crumb">Tableau de bord</a>
+<span class="sep">/</span>
+<a href="{{ url_for('commercial.products_list') }}" class="crumb">Produits</a>
+<span class="sep">/</span>
+<span class="current">{{ 'Modifier' if product else 'Nouveau' }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>{{ 'Modifier le produit' if product else 'Nouveau produit' }}</h1>
+        <p class="text-muted">{{ 'Mettre à jour les informations du produit' if product else 'Ajouter un nouveau produit au catalogue' }}</p>
+    </div>
+</div>
+
+<div class="card" style="max-width:800px;">
+    <form method="POST" action="{{ url_for('commercial.product_update', id=product.id) if product else url_for('commercial.product_create') }}" class="form">
+        <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+            <div class="form-group">
+                <label class="form-label">Référence *</label>
+                <input type="text" name="reference" class="form-input" required value="{{ product.reference if product else '' }}" placeholder="ART-001">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Nom du produit *</label>
+                <input type="text" name="name" class="form-input" required value="{{ product.name if product else '' }}" placeholder="Dénomination">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Catégorie</label>
+                <input type="text" name="category" class="form-input" value="{{ product.category if product else '' }}" placeholder="Catégorie">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Unité</label>
+                <select name="unit" class="form-input">
+                    <option value="unité" {% if product and product.unit == 'unité' %}selected{% endif %}>Unité</option>
+                    <option value="pièce" {% if product and product.unit == 'pièce' %}selected{% endif %}>Pièce</option>
+                    <option value="kg" {% if product and product.unit == 'kg' %}selected{% endif %}>Kilogramme</option>
+                    <option value="litre" {% if product and product.unit == 'litre' %}selected{% endif %}>Litre</option>
+                    <option value="mètre" {% if product and product.unit == 'mètre' %}selected{% endif %}>Mètre</option>
+                    <option value="carton" {% if product and product.unit == 'carton' %}selected{% endif %}>Carton</option>
+                    <option value="boîte" {% if product and product.unit == 'boîte' %}selected{% endif %}>Boîte</option>
+                    <option value="sac" {% if product and product.unit == 'sac' %}selected{% endif %}>Sac</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Variante</label>
+                <input type="text" name="variant" class="form-input" value="{{ product.variant if product else '' }}" placeholder="Couleur, taille...">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Prix unitaire *</label>
+                <input type="number" name="price" class="form-input" required step="0.01" min="0" value="{{ product.price if product else '' }}" placeholder="0">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Stock initial</label>
+                <input type="number" name="stock_qty" class="form-input" step="0.01" min="0" value="{{ product.stock_qty if product else '0' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Seuil minimum</label>
+                <input type="number" name="stock_min" class="form-input" step="0.01" min="0" value="{{ product.stock_min if product else '0' }}">
+            </div>
+        </div>
+        <div class="form-actions" style="display:flex;gap:1rem;margin-top:1.5rem;">
+            <button type="submit" class="btn btn-primary">{{ 'Mettre à jour' if product else 'Créer le produit' }}</button>
+            <a href="{{ url_for('commercial.products_list') }}" class="btn btn-ghost">Annuler</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

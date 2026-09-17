@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}KAVALI ERP — {{ 'Modifier' if vehicle else 'Nouveau' }} Véhicule{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="crumb">Tableau de bord</a>
+<span class="sep">/</span>
+<a href="{{ url_for('fleet.vehicles_list') }}" class="crumb">Véhicules</a>
+<span class="sep">/</span>
+<span class="current">{{ 'Modifier' if vehicle else 'Nouveau' }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>{{ 'Modifier le véhicule' if vehicle else 'Nouveau véhicule' }}</h1>
+        <p class="text-muted">
+            {% if vehicle %}
+            {{ vehicle.immatriculation }} — {{ vehicle.brand }} {{ vehicle.model }}
+            {% else %}
+            Ajouter un véhicule à la flotte
+            {% endif %}
+        </p>
+    </div>
+</div>
+
+<div class="card" style="max-width:960px;">
+    <form method="POST" action="{% if vehicle %}{{ url_for('fleet.vehicle_update', id=vehicle.id) }}{% else %}{{ url_for('fleet.vehicle_create') }}{% endif %}" class="form">
+        <!-- Section 1: Identité -->
+        <div class="section-title">🚗 Identité du véhicule</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5rem;">
+            <div class="form-group">
+                <label class="form-label">Immatriculation *</label>
+                <input type="text" name="immatriculation" class="form-input" required
+                       value="{{ vehicle.immatriculation if vehicle else '' }}" placeholder="AB-123-CD" style="text-transform:uppercase;">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Marque</label>
+                <input type="text" name="brand" class="form-input"
+                       value="{{ vehicle.brand if vehicle else '' }}" placeholder="Toyota, Mercedes...">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Modèle</label>
+                <input type="text" name="model" class="form-input"
+                       value="{{ vehicle.model if vehicle else '' }}" placeholder="Hilux, Sprinter...">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Année</label>
+                <input type="number" name="year" class="form-input" min="1990" max="2030"
+                       value="{{ vehicle.year if vehicle and vehicle.year > 0 else '' }}" placeholder="2024">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Type</label>
+                <select name="type" class="form-input">
+                    <option value="">Sélectionner...</option>
+                    {% for t in vehicle_types %}
+                    <option value="{{ t }}" {% if vehicle and vehicle.type == t %}selected{% endif %}>{{ t|capitalize }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Carburant</label>
+                <select name="fuel_type" class="form-input">
+                    {% for ft in fuel_types %}
+                    <option value="{{ ft }}" {% if vehicle and vehicle.fuel_type == ft %}selected{% endif %}>{{ ft|capitalize }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <!-- Section 2: Statut & Chauffeur -->
+        <div class="section-title" style="margin-top:2rem;">📋 Statut & affectation</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+            <div class="form-group">
+                <label class="form-label">Statut</label>
+                <select name="status" class="form-input">
+                    {% for st in statuses %}
+                    <option value="{{ st }}" {% if vehicle and vehicle.status == st %}selected{% endif %}>{{ st|replace('_', ' ')|capitalize }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Chauffeur assigné</label>
+                <select name="driver_id" class="form-input">
+                    <option value="0">— Aucun chauffeur —</option>
+                    {% for d in drivers %}
+                    <option value="{{ d.id }}" {% if vehicle and vehicle.driver_id == d.id %}selected{% endif %}>{{ d.full_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <!-- Section 3: Documents -->
+        <div class="section-title" style="margin-top:2rem;">📄 Documents & dates</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5rem;">
+            <div class="form-group">
+                <label class="form-label">Expiration assurance</label>
+                <input type="date" name="insurance_expiry" class="form-input"
+                       value="{{ vehicle.insurance_expiry.strftime('%Y-%m-%d') if vehicle and vehicle.insurance_expiry else '' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Visite technique</label>
+                <input type="date" name="technical_visit" class="form-input"
+                       value="{{ vehicle.technical_visit.strftime('%Y-%m-%d') if vehicle and vehicle.technical_visit else '' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Date d'achat</label>
+                <input type="date" name="purchase_date" class="form-input"
+                       value="{{ vehicle.purchase_date.strftime('%Y-%m-%d') if vehicle and vehicle.purchase_date else '' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Prix d'achat (FCFA)</label>
+                <input type="number" name="purchase_price" class="form-input" step="0.01" min="0"
+                       value="{{ vehicle.purchase_price if vehicle and vehicle.purchase_price > 0 else '' }}" placeholder="0">
+            </div>
+        </div>
+
+        <!-- Section 4: Notes -->
+        <div class="section-title" style="margin-top:2rem;">📝 Notes</div>
+        <div class="form-group">
+            <textarea name="notes" class="form-input" rows="3" placeholder="Notes internes...">{{ vehicle.notes if vehicle else '' }}</textarea>
+        </div>
+
+        <div class="form-actions" style="display:flex;gap:1rem;margin-top:2rem;">
+            <button type="submit" class="btn btn-primary btn-lg">
+                {% if vehicle %}Mettre à jour{% else %}Créer le véhicule{% endif %}
+            </button>
+            <a href="{% if vehicle %}{{ url_for('fleet.vehicle_detail', id=vehicle.id) }}{% else %}{{ url_for('fleet.vehicles_list') }}{% endif %}" class="btn btn-ghost btn-lg">Annuler</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

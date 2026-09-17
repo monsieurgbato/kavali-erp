@@ -1,0 +1,18 @@
+{# Carte de statistique KAVALI ERP — utilisable via include ou macro #}
+
+{% macro stats_card(label, value, sub, icon, color) %}
+<div class="stats-card" style="{% if color %}border-left: 4px solid {{ color }};{% endif %}">
+    <div class="stats-label">{{ label }}</div>
+    <div class="stats-value" style="color: {{ color|default('#0A3809') }};">{{ value }}</div>
+    {% if sub %}<div class="stats-sub">{{ sub }}</div>{% endif %}
+    {% if icon %}<div class="stats-icon">{{ icon }}</div>{% endif %}
+</div>
+{% endmacro %}
+
+{# Exemples pré-remplis pour chargement direct #}
+{% if display_examples is defined and display_examples %}
+    {{ stats_card('CA Engagé', '12 450 000 FCFA', '+15% vs mois dernier', '💰', '#2D6A2E') }}
+    {{ stats_card('CA Encaissé', '8 320 000 FCFA', '67% du CA engagé', '💳', '#27AE60') }}
+    {{ stats_card('Commandes', '34', '12 en attente de validation', '📋', '#937C33') }}
+    {{ stats_card('Alertes', '3', '2 urgences • 1 en retard', '🚨', '#E67E22') }}
+{% endif %}

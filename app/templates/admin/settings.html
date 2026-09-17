@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}KAVALI ERP — Paramètres société{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('dashboard.index') }}" class="crumb">Tableau de bord</a>
+<span class="sep">/</span>
+<span class="current">Paramètres société</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;">
+    <div>
+        <h1>Paramètres société</h1>
+        <p class="text-muted">Informations légales et coordonnées de l'entreprise</p>
+    </div>
+</div>
+
+<div class="card" style="max-width:960px;">
+    <form method="POST" action="{{ url_for('admin.settings_update') }}" class="form">
+        <!-- Section 1: Identité -->
+        <div class="section-title">🏢 Identité</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+            <div class="form-group">
+                <label class="form-label">Raison sociale *</label>
+                <input type="text" name="name" class="form-input" required
+                       value="{{ company.name or '' }}" placeholder="Nom de l'entreprise">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Forme juridique</label>
+                <select name="legal_form" class="form-select">
+                    <option value="">Sélectionner...</option>
+                    {% for lf in legal_forms %}
+                    <option value="{{ lf }}" {% if company.legal_form == lf %}selected{% endif %}>{{ lf }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Secteur d'activité</label>
+                <input type="text" name="activity" class="form-input"
+                       value="{{ company.activity or '' }}" placeholder="Secteur d'activité">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Capital social (FCFA)</label>
+                <input type="number" name="capital" class="form-input" step="0.01" min="0"
+                       value="{{ company.capital or '' }}" placeholder="0">
+            </div>
+        </div>
+
+        <!-- Section 2: Coordonnées -->
+        <div class="section-title" style="margin-top:2rem;">📍 Coordonnées</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+            <div class="form-group">
+                <label class="form-label">Adresse</label>
+                <textarea name="address" class="form-textarea" rows="2" placeholder="Adresse complète">{{ company.address or '' }}</textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Téléphone</label>
+                <input type="text" name="phone" class="form-input"
+                       value="{{ company.phone or '' }}" placeholder="+225 00 00 00 00">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" name="email" class="form-input"
+                       value="{{ company.email or '' }}" placeholder="contact@entreprise.com">
+            </div>
+        </div>
+
+        <!-- Section 3: Réglementation -->
+        <div class="section-title" style="margin-top:2rem;">📜 Réglementation</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5rem;">
+            <div class="form-group">
+                <label class="form-label">RCCM</label>
+                <input type="text" name="rccm" class="form-input"
+                       value="{{ company.rccm or '' }}" placeholder="Numéro RCCM">
+            </div>
+            <div class="form-group">
+                <label class="form-label">N° Contribuable</label>
+                <input type="text" name="contribuable" class="form-input"
+                       value="{{ company.contribuable or '' }}" placeholder="Numéro contribuable">
+            </div>
+            <div class="form-group">
+                <label class="form-label">N° CNPS</label>
+                <input type="text" name="cnps" class="form-input"
+                       value="{{ company.cnps or '' }}" placeholder="Numéro CNPS">
+            </div>
+        </div>
+
+        <!-- Section 4: Banque -->
+        <div class="section-title" style="margin-top:2rem;">🏦 Banque</div>
+        <div class="form-group">
+            <label class="form-label">Coordonnées bancaires</label>
+            <textarea name="bank_details" class="form-textarea" rows="3"
+                      placeholder="Banque, agence, numéro de compte, IBAN...">{{ company.bank_details or '' }}</textarea>
+        </div>
+
+        <div class="form-actions" style="display:flex;gap:1rem;margin-top:2rem;">
+            <button type="submit" class="btn btn-primary btn-lg">Enregistrer</button>
+            <a href="{{ url_for('dashboard.index') }}" class="btn btn-ghost btn-lg">Annuler</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

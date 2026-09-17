@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}KAVALI ERP — Tableau de bord{% endblock %}
+
+{% block breadcrumb %}
+<span class="current">Tableau de bord</span>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+    .stat-card .stat-icon-wrapper.primary { background: var(--kavali-vert-bg); color: var(--kavali-vert); }
+    .stat-card .stat-icon-wrapper.dore { background: var(--kavali-dore-bg); color: var(--kavali-dore); }
+    .stat-card .stat-icon-wrapper.success { background: rgba(34, 197, 94, 0.08); color: #15803D; }
+    .stat-card .stat-icon-wrapper.info { background: rgba(59, 130, 246, 0.08); color: #1D4ED8; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Welcome Banner -->
+<div class="welcome-banner">
+    <div>
+        <h1>👋 Bonjour, <span>{{ current_user.full_name or current_user.email }}</span></h1>
+        <p>Bienvenue sur KAVALI ERP — Vue d'ensemble de votre activité</p>
+    </div>
+    <div class="banner-date">
+        📅 {{ today().strftime('%d %B %Y') if today is defined else '' }}
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="quick-actions">
+    <a href="{{ url_for('commercial.order_new') }}" class="quick-action">
+        <span class="qa-icon">➕</span>
+        <span class="qa-label">Nouvelle commande</span>
+    </a>
+    <a href="{{ url_for('commercial.client_new') }}" class="quick-action">
+        <span class="qa-icon">👤</span>
+        <span class="qa-label">Nouveau client</span>
+    </a>
+    <a href="{{ url_for('commercial.devis_list') }}" class="quick-action">
+        <span class="qa-icon">📄</span>
+        <span class="qa-label">Nouveau devis</span>
+    </a>
+    <a href="{{ url_for('commercial.product_new') }}" class="quick-action">
+        <span class="qa-icon">📦</span>
+        <span class="qa-label">Nouvel article</span>
+    </a>
+    <a href="#" class="quick-action">
+        <span class="qa-icon">📋</span>
+        <span class="qa-label">Rapport rapide</span>
+    </a>
+</div>
+
+<!-- Stats Cards (HTMX) -->
+<div class="stats-grid"
+     hx-get="{{ url_for('dashboard.stats') if 'dashboard' in url_for.__globals__ else '#' }}"
+     hx-trigger="load"
+     hx-swap="innerHTML">
+    <div class="skeleton skeleton-card"></div>
+    <div class="skeleton skeleton-card"></div>
+    <div class="skeleton skeleton-card"></div>
+    <div class="skeleton skeleton-card"></div>
+</div>
+
+<!-- Two-column layout -->
+<div class="grid-2">
+
+    <!-- Recent Orders -->
+    <div>
+        <div class="section-title">📋 Commandes récentes</div>
+        <div class="table-container"
+             hx-get="{{ url_for('dashboard.recent_orders') if 'dashboard' in url_for.__globals__ else '#' }}"
+             hx-trigger="load"
+             hx-swap="innerHTML">
+            <div class="skeleton skeleton-text" style="margin:1rem auto;"></div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div>
+        <div class="section-title">🕐 Activité récente</div>
+        <div class="table-container"
+             hx-get="{{ url_for('dashboard.recent_activity') if 'dashboard' in url_for.__globals__ else '#' }}"
+             hx-trigger="load"
+             hx-swap="innerHTML">
+            <div class="skeleton skeleton-text" style="margin:1rem auto;"></div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Auto-refresh stats every 60 seconds
+    document.body.addEventListener('htmx:afterSettle', function(evt) {
+        if (evt.detail.target && evt.detail.target.getAttribute('hx-get') === '{{ url_for("dashboard.stats") if 'dashboard' in url_for.__globals__ else "#" }}') {
+            setTimeout(function() {
+                htmx.trigger('.stats-grid', 'load');
+            }, 60000);
+        }
+    });
+</script>
+{% endblock %}
